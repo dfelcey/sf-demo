@@ -21,7 +21,48 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Install Salesforce CLI
-        run: npm install -g @salesforce/cli
+        run: |
+          echo "Checking for Salesforce CLI..."
+          
+          # Check if sf CLI is already installed
+          if command -v sf &> /dev/null; then
+            echo "✅ Salesforce CLI found: $(sf --version)"
+          else
+            echo "📦 Salesforce CLI not found. Installing..."
+            
+            # Check if Node.js/npm is available
+            if ! command -v npm &> /dev/null; then
+              echo "❌ npm is not installed. Installing Node.js..."
+              # Install Node.js (required for npm)
+              curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+              sudo apt-get install -y nodejs
+            fi
+            
+            echo "Installing Salesforce CLI via npm..."
+            npm install -g @salesforce/cli || {
+              echo "❌ Failed to install Salesforce CLI"
+              echo "Trying alternative installation method..."
+              # Alternative: use npm with --force or try different approach
+              npm install -g @salesforce/cli --force || {
+                echo "❌ Installation failed. Please check npm and Node.js versions."
+                exit 1
+              }
+            }
+            
+            # Verify installation
+            if command -v sf &> /dev/null; then
+              echo "✅ Salesforce CLI installed successfully: $(sf --version)"
+            else
+              echo "❌ Salesforce CLI installation completed but 'sf' command not found"
+              echo "Checking PATH and installation location..."
+              npm list -g @salesforce/cli || true
+              exit 1
+            fi
+          fi
+          
+          # Ensure sf is in PATH
+          export PATH="$PATH:$(npm config get prefix)/bin"
+          echo "Salesforce CLI ready: $(sf --version)"
 
       - name: Authenticate to Salesforce
         id: login
