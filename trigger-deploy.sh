@@ -428,20 +428,36 @@ if [ "$HTTP_CODE" -eq 204 ]; then
     LATEST_RUN_CREATED=$(echo "$RUNS_CHECK" | jq -r '.workflow_runs[0].created_at // empty' 2>/dev/null)
     
     if [ -n "$RUN_ID" ]; then
+        RUN_URL="https://github.com/${GITHUB_OWNER}/${GITHUB_REPO}/actions/runs/${RUN_ID}"
         log_success "Workflow run created!"
         log_info "  Run ID: $RUN_ID"
         log_info "  Status: $LATEST_RUN_STATUS"
         log_info "  Created: $LATEST_RUN_CREATED"
         echo ""
-        echo "✅ Workflow run confirmed!"
+        echo "=========================================="
+        echo "✅ Workflow Run Confirmed!"
+        echo "=========================================="
+        echo ""
         echo "  Run ID: $RUN_ID"
         echo "  Status: $LATEST_RUN_STATUS"
-        echo "  View at: https://github.com/${GITHUB_OWNER}/${GITHUB_REPO}/actions/runs/${RUN_ID}"
+        echo "  Created: $LATEST_RUN_CREATED"
+        echo ""
+        echo "  🔗 View Run:"
+        echo "  ${RUN_URL}"
+        echo ""
+        echo "  🔗 All Workflows:"
+        echo "  https://github.com/${GITHUB_OWNER}/${GITHUB_REPO}/actions"
         echo ""
     else
         log_warn "Workflow dispatch returned 204 but no run found yet"
         log_warn "Will retry to find the run ID..."
         RUN_ID=""
+        RUN_URL="https://github.com/${GITHUB_OWNER}/${GITHUB_REPO}/actions"
+        echo ""
+        echo "⚠️  Run ID not found yet, but workflow was triggered"
+        echo "View all workflow runs at:"
+        echo "  ${RUN_URL}"
+        echo ""
     fi
 else
     log_error "Failed to trigger workflow (HTTP $HTTP_CODE)"
@@ -655,15 +671,22 @@ if [ "$HTTP_CODE" -eq 204 ]; then
         log_success "Found workflow run ID: $RUN_ID"
     fi
     
-    RUN_URL="https://github.com/${GITHUB_OWNER}/${GITHUB_REPO}/actions/runs/${RUN_ID}"
+    # Set RUN_URL if not already set
+    if [ -z "$RUN_URL" ]; then
+        RUN_URL="https://github.com/${GITHUB_OWNER}/${GITHUB_REPO}/actions/runs/${RUN_ID}"
+    fi
+    
     echo ""
     echo "=========================================="
     echo "📊 Deployment Progress"
     echo "=========================================="
     echo ""
     echo "Monitoring workflow progress..."
-    echo "Run ID: ${RUN_ID}"
-    echo "View at: ${RUN_URL}"
+    echo ""
+    echo "  Run ID: ${RUN_ID}"
+    echo "  View at: ${RUN_URL}"
+    echo ""
+    echo "Press Ctrl+C to stop monitoring (workflow will continue running)"
     echo ""
     
     # Poll for status updates and Device Login info
