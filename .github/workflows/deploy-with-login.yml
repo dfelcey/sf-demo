@@ -140,31 +140,13 @@ jobs:
             echo "[$(date '+%Y-%m-%d %H:%M:%S')] Attempting to authenticate with access token..."
             echo ""
             
-            # Export access token as environment variable (required by sf CLI)
-            export SF_ACCESS_TOKEN
-            
-            # Try access-token login (CLI reads token from SF_ACCESS_TOKEN env var)
-            LOGIN_OUTPUT=$(sf org login access-token \
-              --alias targetOrg \
-              --instance-url "$SF_INSTANCE_URL" \
-              --no-prompt 2>&1)
-            LOGIN_EXIT_CODE=$?
-            
-            if [ $LOGIN_EXIT_CODE -eq 0 ]; then
-              echo "[$(date '+%Y-%m-%d %H:%M:%S')] ✅ Authentication successful using browser login credentials!"
-              echo "$LOGIN_OUTPUT"
-            else
+            # Verify token format (should be "<org id>!<accesstoken>")
+            if [[ "$SF_ACCESS_TOKEN" != *"!"* ]]; then
+              echo "[$(date '+%Y-%m-%d %H:%M:%S')] ⚠️  Warning: Access token doesn't appear to be in correct format"
+              echo "Expected format: <org id>!<accesstoken>"
+              echo "Token preview: ${SF_ACCESS_TOKEN:0:50}..."
               echo ""
-              echo "[$(date '+%Y-%m-%d %H:%M:%S')] ❌ Authentication with access token failed (exit code: $LOGIN_EXIT_CODE)"
-              echo "Login output:"
-              echo "$LOGIN_OUTPUT"
-              echo ""
-              echo "This might happen if:"
-              echo "- The access token has expired"
-              echo "- The token format is incorrect"
-              echo "- The instance URL doesn't match the token"
-              echo ""
-              echo "[$(date '+%Y-%m-%d %H:%M:%S')] Falling back to Device Login..."
+              echo "Falling back to Device Login..."
               echo ""
               
               # Fall back to device login
@@ -193,6 +175,61 @@ jobs:
               
               echo ""
               echo "[$(date '+%Y-%m-%d %H:%M:%S')] ✅ Authentication successful via device login!"
+            else
+              # Export access token as environment variable (required by sf CLI)
+              export SF_ACCESS_TOKEN
+              
+              # Try access-token login (CLI reads token from SF_ACCESS_TOKEN env var)
+              LOGIN_OUTPUT=$(sf org login access-token \
+                --alias targetOrg \
+                --instance-url "$SF_INSTANCE_URL" \
+                --no-prompt 2>&1)
+              LOGIN_EXIT_CODE=$?
+            
+              if [ $LOGIN_EXIT_CODE -eq 0 ]; then
+                echo "[$(date '+%Y-%m-%d %H:%M:%S')] ✅ Authentication successful using browser login credentials!"
+                echo "$LOGIN_OUTPUT"
+              else
+                echo ""
+                echo "[$(date '+%Y-%m-%d %H:%M:%S')] ❌ Authentication with access token failed (exit code: $LOGIN_EXIT_CODE)"
+                echo "Login output:"
+                echo "$LOGIN_OUTPUT"
+                echo ""
+                echo "This might happen if:"
+                echo "- The access token has expired"
+                echo "- The token format is incorrect (should be: <org id>!<accesstoken>)"
+                echo "- The instance URL doesn't match the token"
+                echo ""
+                echo "[$(date '+%Y-%m-%d %H:%M:%S')] Falling back to Device Login..."
+                echo ""
+                
+                # Fall back to device login
+                SF_INSTANCE_URL="${SF_INSTANCE_URL:-https://login.salesforce.com}"
+                echo "[$(date '+%Y-%m-%d %H:%M:%S')] Using Device Login with instance URL: $SF_INSTANCE_URL"
+                echo ""
+                echo "📋 INSTRUCTIONS:"
+                echo "1. Watch the logs below for a Device Login code (8 digits)"
+                echo "2. Visit the URL shown below"
+                echo "3. Enter the code when prompted"
+                echo "4. Complete authentication on Salesforce"
+                echo ""
+                echo "=========================================="
+                echo ""
+                
+                sf org login device --alias targetOrg --instance-url "$SF_INSTANCE_URL" || {
+                    echo ""
+                    echo "[$(date '+%Y-%m-%d %H:%M:%S')] ❌ Device login failed or timed out"
+                    echo ""
+                    echo "Troubleshooting:"
+                    echo "- Check the logs above for the device code"
+                    echo "- Make sure you visit the URL and enter the code within 10 minutes"
+                    echo "- Verify your Salesforce org URL is correct"
+                    exit 1
+                }
+                
+                echo ""
+                echo "[$(date '+%Y-%m-%d %H:%M:%S')] ✅ Authentication successful via device login!"
+              fi
             fi
           else
             echo "No credentials provided. Using Device Login..."

@@ -227,7 +227,7 @@ log_debug "Org info retrieved (length: ${#ORG_INFO} chars)"
 
 # Extract individual fields
 log_info "Parsing org credentials from JSON..."
-SF_ACCESS_TOKEN=$(echo "$ORG_INFO" | jq -r '.result.accessToken // empty' 2>/dev/null)
+RAW_ACCESS_TOKEN=$(echo "$ORG_INFO" | jq -r '.result.accessToken // empty' 2>/dev/null)
 SF_INSTANCE_URL=$(echo "$ORG_INFO" | jq -r '.result.instanceUrl // empty' 2>/dev/null)
 ORG_USERNAME=$(echo "$ORG_INFO" | jq -r '.result.username // "unknown"' 2>/dev/null)
 ORG_ID=$(echo "$ORG_INFO" | jq -r '.result.id // "unknown"' 2>/dev/null)
@@ -236,14 +236,25 @@ log_debug "Extracted values:"
 log_debug "  Username: $ORG_USERNAME"
 log_debug "  Org ID: $ORG_ID"
 log_debug "  Instance URL: $SF_INSTANCE_URL"
-log_debug "  Access Token: ${SF_ACCESS_TOKEN:0:20}... (length: ${#SF_ACCESS_TOKEN})"
+log_debug "  Raw Access Token: ${RAW_ACCESS_TOKEN:0:20}... (length: ${#RAW_ACCESS_TOKEN})"
 
-if [ -z "$SF_ACCESS_TOKEN" ] || [ -z "$SF_INSTANCE_URL" ]; then
+if [ -z "$RAW_ACCESS_TOKEN" ] || [ -z "$SF_INSTANCE_URL" ] || [ "$ORG_ID" = "unknown" ]; then
     log_error "Failed to extract required credentials from org"
-    log_error "Access Token: ${SF_ACCESS_TOKEN:+present}${SF_ACCESS_TOKEN:-missing}"
+    log_error "Access Token: ${RAW_ACCESS_TOKEN:+present}${RAW_ACCESS_TOKEN:-missing}"
     log_error "Instance URL: ${SF_INSTANCE_URL:+present}${SF_INSTANCE_URL:-missing}"
+    log_error "Org ID: ${ORG_ID:+present}${ORG_ID:-missing}"
     log_debug "Full org info: $ORG_INFO"
     exit 1
+fi
+
+# Format access token as required by Salesforce CLI: "<org id>!<accesstoken>"
+# Check if token is already in the correct format
+if [[ "$RAW_ACCESS_TOKEN" == *"!"* ]]; then
+    SF_ACCESS_TOKEN="$RAW_ACCESS_TOKEN"
+    log_debug "Access token already in correct format (contains '!')"
+else
+    SF_ACCESS_TOKEN="${ORG_ID}!${RAW_ACCESS_TOKEN}"
+    log_debug "Formatted access token as: ${ORG_ID}!<token>"
 fi
 
 log_success "Credentials extracted successfully!"
