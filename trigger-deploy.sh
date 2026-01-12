@@ -294,8 +294,26 @@ echo ""
 API_URL="https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/actions/workflows/${WORKFLOW_FILE}/dispatches"
 log_debug "API URL: $API_URL"
 
+# Verify credentials are available before building payload
+if [ -z "$SF_ACCESS_TOKEN" ] || [ -z "$SF_INSTANCE_URL" ]; then
+    log_error "Missing required credentials!"
+    log_error "Access Token: ${SF_ACCESS_TOKEN:+present (${#SF_ACCESS_TOKEN} chars)}${SF_ACCESS_TOKEN:-missing}"
+    log_error "Instance URL: ${SF_INSTANCE_URL:+present}${SF_INSTANCE_URL:-missing}"
+    echo ""
+    echo "❌ Cannot trigger workflow without credentials"
+    echo ""
+    echo "Please ensure:"
+    echo "1. You are authenticated to Salesforce (run: sf org login web)"
+    echo "2. The org alias '$ORG_ALIAS' exists"
+    echo "3. Credentials were extracted successfully"
+    exit 1
+fi
+
 # Prepare payload with credentials
 log_info "Building workflow dispatch payload..."
+log_info "  Access Token length: ${#SF_ACCESS_TOKEN} chars"
+log_info "  Instance URL: $SF_INSTANCE_URL"
+
 if command -v jq &> /dev/null; then
     PAYLOAD=$(jq -n \
         --arg ref "main" \
@@ -303,6 +321,12 @@ if command -v jq &> /dev/null; then
         --arg url "$SF_INSTANCE_URL" \
         '{ref: $ref, inputs: {sf_access_token: $token, sf_instance_url: $url}}')
     log_debug "Payload created using jq (length: ${#PAYLOAD} chars)"
+    
+    # Verify payload was created correctly
+    if [ -z "$PAYLOAD" ]; then
+        log_error "Failed to create payload with jq"
+        exit 1
+    fi
 else
     # Fallback: manual JSON (may fail with special characters)
     PAYLOAD=$(cat <<EOF
@@ -317,7 +341,16 @@ EOF
 )
     log_warn "Payload created manually (jq not available, may fail with special characters)"
     log_debug "Payload length: ${#PAYLOAD} chars"
+    
+    # Verify payload contains the credentials
+    if [[ "$PAYLOAD" != *"sf_access_token"* ]] || [[ "$PAYLOAD" != *"sf_instance_url"* ]]; then
+        log_error "Payload validation failed - credentials not found in payload"
+        exit 1
+    fi
 fi
+
+log_info "Payload created successfully"
+log_debug "Payload preview: ${PAYLOAD:0:100}..."
 
 log_info "Sending workflow dispatch request..."
 log_info "API URL: $API_URL"
