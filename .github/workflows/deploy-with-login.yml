@@ -21,109 +21,152 @@ jobs:
       - name: Install Salesforce CLI
         run: |
           set -e  # Exit on error
-          echo "Checking for Salesforce CLI..."
+          set -x  # Enable debug mode (show commands)
+          
+          echo "=========================================="
+          echo "📦 Installing Salesforce CLI"
+          echo "=========================================="
+          echo ""
+          echo "[$(date '+%Y-%m-%d %H:%M:%S')] Starting CLI installation check..."
+          echo "Runner OS: $(uname -a)"
+          echo "Working directory: $(pwd)"
+          echo "User: $(whoami)"
+          echo ""
           
           # Check if sf CLI is already installed
           if command -v sf &> /dev/null; then
-            echo "✅ Salesforce CLI found: $(sf --version)"
+            SF_VERSION=$(sf --version 2>&1)
+            echo "[$(date '+%Y-%m-%d %H:%M:%S')] ✅ Salesforce CLI found: $SF_VERSION"
+            echo "[$(date '+%Y-%m-%d %H:%M:%S')] CLI location: $(which sf)"
           else
-            echo "📦 Salesforce CLI not found. Installing..."
+            echo "[$(date '+%Y-%m-%d %H:%M:%S')] 📦 Salesforce CLI not found. Installing..."
             
             # Check if Node.js/npm is available
             if ! command -v npm &> /dev/null; then
-              echo "❌ npm is not installed. Installing Node.js..."
+              echo "[$(date '+%Y-%m-%d %H:%M:%S')] ❌ npm is not installed. Installing Node.js..."
               # Install Node.js (required for npm)
               curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
               sudo apt-get install -y nodejs
-              echo "✅ Node.js installed: $(node --version)"
-              echo "✅ npm installed: $(npm --version)"
+              echo "[$(date '+%Y-%m-%d %H:%M:%S')] ✅ Node.js installed: $(node --version)"
+              echo "[$(date '+%Y-%m-%d %H:%M:%S')] ✅ npm installed: $(npm --version)"
+            else
+              echo "[$(date '+%Y-%m-%d %H:%M:%S')] ✅ npm found: $(npm --version)"
+              echo "[$(date '+%Y-%m-%d %H:%M:%S')] ✅ Node.js found: $(node --version)"
             fi
             
-            echo "Installing Salesforce CLI via npm..."
+            echo ""
+            echo "[$(date '+%Y-%m-%d %H:%M:%S')] Installing Salesforce CLI via npm..."
+            echo "npm prefix: $(npm config get prefix)"
+            echo "npm cache: $(npm config get cache)"
+            
             npm install -g @salesforce/cli || {
-              echo "❌ Failed to install Salesforce CLI"
-              echo "Trying alternative installation method..."
+              echo "[$(date '+%Y-%m-%d %H:%M:%S')] ❌ Failed to install Salesforce CLI"
+              echo "[$(date '+%Y-%m-%d %H:%M:%S')] Trying alternative installation method..."
               # Alternative: use npm with --force or try different approach
               npm install -g @salesforce/cli --force || {
-                echo "❌ Installation failed. Please check npm and Node.js versions."
+                echo "[$(date '+%Y-%m-%d %H:%M:%S')] ❌ Installation failed. Please check npm and Node.js versions."
                 echo "Node version: $(node --version)"
                 echo "npm version: $(npm --version)"
+                echo "npm output:"
+                npm list -g @salesforce/cli || true
                 exit 1
               }
             }
             
             # Verify installation
             if command -v sf &> /dev/null; then
-              echo "✅ Salesforce CLI installed successfully: $(sf --version)"
+              SF_VERSION=$(sf --version 2>&1)
+              echo "[$(date '+%Y-%m-%d %H:%M:%S')] ✅ Salesforce CLI installed successfully: $SF_VERSION"
             else
-              echo "❌ Salesforce CLI installation completed but 'sf' command not found"
+              echo "[$(date '+%Y-%m-%d %H:%M:%S')] ❌ Salesforce CLI installation completed but 'sf' command not found"
               echo "Checking PATH and installation location..."
               npm list -g @salesforce/cli || true
               echo "PATH: $PATH"
               echo "npm prefix: $(npm config get prefix)"
+              echo "npm global bin: $(npm config get prefix)/bin"
+              ls -la "$(npm config get prefix)/bin" | grep sf || echo "No sf binary found in npm bin directory"
               exit 1
             fi
           fi
           
           # Ensure sf is in PATH
           export PATH="$PATH:$(npm config get prefix)/bin"
-          echo "Salesforce CLI ready: $(sf --version)"
-          echo "CLI location: $(which sf)"
+          SF_VERSION=$(sf --version 2>&1)
+          SF_LOCATION=$(which sf)
+          echo ""
+          echo "[$(date '+%Y-%m-%d %H:%M:%S')] ✅ Salesforce CLI ready"
+          echo "  Version: $SF_VERSION"
+          echo "  Location: $SF_LOCATION"
+          echo "  PATH: $PATH"
+          echo ""
 
       - name: Authenticate to Salesforce
         id: login
         timeout-minutes: 10
         run: |
           set -e  # Exit on error
+          set -x  # Enable debug mode (show commands)
+          
           echo "=========================================="
           echo "🔐 Salesforce Authentication"
           echo "=========================================="
+          echo ""
+          echo "[$(date '+%Y-%m-%d %H:%M:%S')] Starting authentication process..."
+          echo ""
           
           # Get credentials from workflow inputs (from local browser login)
           SF_ACCESS_TOKEN="${{ inputs.sf_access_token }}"
           SF_INSTANCE_URL="${{ inputs.sf_instance_url }}"
           
           # Debug: Check if inputs are provided (without showing token)
-          echo "Debug: Checking inputs..."
+          echo "[$(date '+%Y-%m-%d %H:%M:%S')] Checking workflow inputs..."
           if [ -n "$SF_ACCESS_TOKEN" ]; then
-            echo "✅ Access token provided (length: ${#SF_ACCESS_TOKEN} chars)"
+            echo "[$(date '+%Y-%m-%d %H:%M:%S')] ✅ Access token provided (length: ${#SF_ACCESS_TOKEN} chars)"
+            echo "[$(date '+%Y-%m-%d %H:%M:%S')] Token preview: ${SF_ACCESS_TOKEN:0:20}...${SF_ACCESS_TOKEN: -10}"
           else
-            echo "⚠️  No access token provided"
+            echo "[$(date '+%Y-%m-%d %H:%M:%S')] ⚠️  No access token provided"
           fi
           
           if [ -n "$SF_INSTANCE_URL" ]; then
-            echo "✅ Instance URL provided: $SF_INSTANCE_URL"
+            echo "[$(date '+%Y-%m-%d %H:%M:%S')] ✅ Instance URL provided: $SF_INSTANCE_URL"
           else
-            echo "⚠️  No instance URL provided"
+            echo "[$(date '+%Y-%m-%d %H:%M:%S')] ⚠️  No instance URL provided"
           fi
           echo ""
           
           # Check if credentials provided via inputs (from local browser login)
           if [ -n "$SF_ACCESS_TOKEN" ] && [ -n "$SF_INSTANCE_URL" ]; then
-            echo "Using credentials from browser login..."
-            echo "Attempting to authenticate with access token..."
+            echo "[$(date '+%Y-%m-%d %H:%M:%S')] Using credentials from browser login..."
+            echo "[$(date '+%Y-%m-%d %H:%M:%S')] Attempting to authenticate with access token..."
+            echo ""
             
             # Try access-token login
-            if sf org login access-token \
+            LOGIN_OUTPUT=$(sf org login access-token \
               --alias targetOrg \
               --instance-url "$SF_INSTANCE_URL" \
-              --access-token "$SF_ACCESS_TOKEN" 2>&1; then
-              echo "✅ Authentication successful using browser login credentials!"
+              --access-token "$SF_ACCESS_TOKEN" 2>&1)
+            LOGIN_EXIT_CODE=$?
+            
+            if [ $LOGIN_EXIT_CODE -eq 0 ]; then
+              echo "[$(date '+%Y-%m-%d %H:%M:%S')] ✅ Authentication successful using browser login credentials!"
+              echo "$LOGIN_OUTPUT"
             else
               echo ""
-              echo "❌ Authentication with access token failed"
+              echo "[$(date '+%Y-%m-%d %H:%M:%S')] ❌ Authentication with access token failed (exit code: $LOGIN_EXIT_CODE)"
+              echo "Login output:"
+              echo "$LOGIN_OUTPUT"
               echo ""
               echo "This might happen if:"
               echo "- The access token has expired"
               echo "- The token format is incorrect"
               echo "- The instance URL doesn't match the token"
               echo ""
-              echo "Falling back to Device Login..."
+              echo "[$(date '+%Y-%m-%d %H:%M:%S')] Falling back to Device Login..."
               echo ""
               
               # Fall back to device login
               SF_INSTANCE_URL="${SF_INSTANCE_URL:-https://login.salesforce.com}"
-              echo "Using Device Login with instance URL: $SF_INSTANCE_URL"
+              echo "[$(date '+%Y-%m-%d %H:%M:%S')] Using Device Login with instance URL: $SF_INSTANCE_URL"
               echo ""
               echo "📋 INSTRUCTIONS:"
               echo "1. Watch the logs below for a Device Login code (8 digits)"
@@ -136,7 +179,7 @@ jobs:
               
               sf org login device --alias targetOrg --instance-url "$SF_INSTANCE_URL" || {
                   echo ""
-                  echo "❌ Device login failed or timed out"
+                  echo "[$(date '+%Y-%m-%d %H:%M:%S')] ❌ Device login failed or timed out"
                   echo ""
                   echo "Troubleshooting:"
                   echo "- Check the logs above for the device code"
@@ -146,7 +189,7 @@ jobs:
               }
               
               echo ""
-              echo "✅ Authentication successful via device login!"
+              echo "[$(date '+%Y-%m-%d %H:%M:%S')] ✅ Authentication successful via device login!"
             fi
           else
             echo "No credentials provided. Using Device Login..."
@@ -181,43 +224,104 @@ jobs:
           
           # Verify authentication worked
           echo ""
-          echo "Verifying authentication..."
-          sf org display --target-org targetOrg --json > /dev/null 2>&1 || {
-            echo "❌ Failed to verify authentication"
+          echo "[$(date '+%Y-%m-%d %H:%M:%S')] Verifying authentication..."
+          ORG_DISPLAY=$(sf org display --target-org targetOrg --json 2>&1)
+          ORG_DISPLAY_EXIT=$?
+          
+          if [ $ORG_DISPLAY_EXIT -eq 0 ]; then
+            echo "[$(date '+%Y-%m-%d %H:%M:%S')] ✅ Authentication verified!"
+            echo ""
+            echo "Org details:"
+            echo "$ORG_DISPLAY" | jq -r '.result | "  Username: \(.username)\n  Org ID: \(.id)\n  Instance URL: \(.instanceUrl)\n  Access Token: \(.accessToken[0:20])..."' || echo "$ORG_DISPLAY"
+          else
+            echo "[$(date '+%Y-%m-%d %H:%M:%S')] ❌ Failed to verify authentication (exit code: $ORG_DISPLAY_EXIT)"
+            echo "Error output:"
+            echo "$ORG_DISPLAY"
+            echo ""
+            echo "Available orgs:"
+            sf org list || true
+            echo ""
             echo "Org might not be authenticated properly"
             exit 1
-          }
-          echo "✅ Authentication verified!"
+          fi
+          echo ""
 
       - name: Deploy Assets
         run: |
           set -e  # Exit on error
-          echo "🚀 Starting deployment to Salesforce..."
+          set -x  # Enable debug mode (show commands)
+          
+          echo "=========================================="
+          echo "🚀 Starting Deployment"
+          echo "=========================================="
+          echo ""
+          echo "[$(date '+%Y-%m-%d %H:%M:%S')] Starting deployment to Salesforce..."
+          echo ""
           
           # Verify org is authenticated before deploying
-          echo "Verifying target org..."
-          sf org display --target-org targetOrg --json > /dev/null 2>&1 || {
-            echo "❌ Target org 'targetOrg' is not authenticated"
+          echo "[$(date '+%Y-%m-%d %H:%M:%S')] Verifying target org..."
+          ORG_VERIFY=$(sf org display --target-org targetOrg --json 2>&1)
+          ORG_VERIFY_EXIT=$?
+          
+          if [ $ORG_VERIFY_EXIT -ne 0 ]; then
+            echo "[$(date '+%Y-%m-%d %H:%M:%S')] ❌ Target org 'targetOrg' is not authenticated (exit code: $ORG_VERIFY_EXIT)"
+            echo "Error output:"
+            echo "$ORG_VERIFY"
+            echo ""
             echo "Available orgs:"
             sf org list || true
             exit 1
-          }
+          fi
           
-          echo "✅ Target org verified"
+          echo "[$(date '+%Y-%m-%d %H:%M:%S')] ✅ Target org verified"
+          ORG_USERNAME=$(echo "$ORG_VERIFY" | jq -r '.result.username // "unknown"' 2>/dev/null || echo "unknown")
+          ORG_ID=$(echo "$ORG_VERIFY" | jq -r '.result.id // "unknown"' 2>/dev/null || echo "unknown")
+          echo "  Org Username: $ORG_USERNAME"
+          echo "  Org ID: $ORG_ID"
+          echo ""
+          
+          # Check what we're deploying
+          echo "[$(date '+%Y-%m-%d %H:%M:%S')] Checking deployment source..."
+          if [ ! -d "force-app" ]; then
+            echo "[$(date '+%Y-%m-%d %H:%M:%S')] ❌ force-app directory not found!"
+            echo "Current directory: $(pwd)"
+            echo "Directory contents:"
+            ls -la || true
+            exit 1
+          fi
+          
+          echo "[$(date '+%Y-%m-%d %H:%M:%S')] ✅ force-app directory found"
+          echo "Deployment source contents:"
+          find force-app -type f | head -20 || echo "No files found"
           echo ""
           
           # This runs as soon as you finish the login on your machine
-          echo "Deploying from force-app directory..."
-          sf project deploy start --source-dir force-app --target-org targetOrg --wait 10 || {
+          echo "[$(date '+%Y-%m-%d %H:%M:%S')] Starting deployment..."
+          echo "Command: sf project deploy start --source-dir force-app --target-org targetOrg --wait 10"
+          echo ""
+          
+          DEPLOY_OUTPUT=$(sf project deploy start --source-dir force-app --target-org targetOrg --wait 10 2>&1)
+          DEPLOY_EXIT_CODE=$?
+          
+          if [ $DEPLOY_EXIT_CODE -eq 0 ]; then
             echo ""
-            echo "❌ Deployment failed"
+            echo "[$(date '+%Y-%m-%d %H:%M:%S')] ✅ Deployment completed successfully!"
+            echo ""
+            echo "Deployment output:"
+            echo "$DEPLOY_OUTPUT"
+          else
+            echo ""
+            echo "[$(date '+%Y-%m-%d %H:%M:%S')] ❌ Deployment failed (exit code: $DEPLOY_EXIT_CODE)"
+            echo ""
+            echo "Deployment output:"
+            echo "$DEPLOY_OUTPUT"
             echo ""
             echo "Troubleshooting:"
             echo "- Check the error messages above"
             echo "- Verify the org has the necessary permissions"
             echo "- Ensure the metadata is valid"
+            echo "- Check that the org supports the API version used"
             exit 1
-          }
+          fi
           echo ""
-          echo "✅ Deployment completed successfully!"
 
