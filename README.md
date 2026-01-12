@@ -1,55 +1,92 @@
 # Salesforce DX Project: sf-demo
 
-A Salesforce project with automated deployment via GitHub Actions.
+A Salesforce project with automated deployment via GitHub Actions using Device Login (no Connected App required).
 
-## Deployment Options
+## Quick Start
 
-### Option 1: Web Portal (No CLI Required) 🌐
+### Deploy via GitHub Actions
 
-Deploy from any browser without installing Salesforce CLI:
+1. **Run the trigger script:**
+   ```bash
+   ./trigger-deploy.sh
+   ```
+   
+   Or specify a Salesforce instance URL:
+   ```bash
+   ./trigger-deploy.sh https://test.salesforce.com  # For sandbox
+   ```
 
-1. **Set up GitHub Pages:**
-   - Go to repository Settings → Pages
-   - Set source to `/docs` folder
-   - Visit: `https://yourusername.github.io/sf-demo/`
+2. **Watch GitHub Actions:**
+   - Go to: https://github.com/dfelcey/sf-demo/actions
+   - Find the running workflow
+   - Watch the logs for a Device Login code
 
-2. **Create Salesforce Connected App:**
-   - See [docs/README.md](docs/README.md) for detailed instructions
+3. **Authenticate:**
+   - Copy the URL and 8-digit code from the logs
+   - Visit the URL in your browser
+   - Enter the code and log in to Salesforce
+   - Deployment will proceed automatically
 
-3. **Use the web portal:**
-   - Enter your GitHub token and Connected App Client ID
-   - Authenticate to Salesforce
-   - Deployment triggers automatically!
+## How It Works
 
-See [docs/README.md](docs/README.md) for full setup instructions.
+1. **Trigger Script** → Triggers GitHub Actions workflow
+2. **GitHub Actions** → Installs Salesforce CLI automatically
+3. **Device Login** → Uses Salesforce Device Login (no Connected App needed)
+4. **Deployment** → Deploys your Salesforce project automatically
 
-### Option 2: Local Script (CLI Required) 💻
+## Features
 
-Deploy using the local trigger script:
-
-1. Install Salesforce CLI: `npm install -g @salesforce/cli`
-2. Run: `./trigger-deploy.sh`
-3. Authenticate to Salesforce when prompted
-4. Script extracts credentials and triggers GitHub Actions
+- ✅ **No Connected App Required** - Uses Device Login
+- ✅ **Automatic CLI Installation** - Detects and installs dependencies
+- ✅ **Simple Authentication** - Just visit a URL and enter a code
+- ✅ **No Local CLI Needed** - Everything runs in GitHub Actions
 
 ## Project Structure
 
 - `force-app/` - Salesforce metadata (custom objects, classes, etc.)
 - `.github/workflows/` - GitHub Actions workflow for deployment
-- `docs/` - Web portal for browser-based deployment
-- `trigger-deploy.sh` - Local deployment script
+- `trigger-deploy.sh` - Script to trigger deployment
+- `config/` - Salesforce project configuration
 
-## How Do You Plan to Deploy Your Changes?
+## Configuration
 
-Do you want to deploy a set of changes, or create a self-contained application? Choose a [development model](https://developer.salesforce.com/tools/vscode/en/user-guide/development-models).
+### Optional: GitHub Token
 
-## Configure Your Salesforce DX Project
+For private repositories, create a `.env` file:
+```
+GITHUB_TOKEN=ghp_your_token_here
+```
 
-The `sfdx-project.json` file contains useful configuration information for your project. See [Salesforce DX Project Configuration](https://developer.salesforce.com/docs/atlas.en-us.sfdx_dev.meta/sfdx_dev/sfdx_dev_ws_config.htm) in the _Salesforce DX Developer Guide_ for details about this file.
+Get a token from: https://github.com/settings/tokens
 
-## Read All About It
+### Instance URL
 
-- [Salesforce Extensions Documentation](https://developer.salesforce.com/tools/vscode/)
-- [Salesforce CLI Setup Guide](https://developer.salesforce.com/docs/atlas.en-us.sfdx_setup.meta/sfdx_setup/sfdx_setup_intro.htm)
+Default: `https://login.salesforce.com` (Production)
+
+For sandboxes, use:
+```bash
+./trigger-deploy.sh https://test.salesforce.com
+```
+
+## Troubleshooting
+
+### Workflow doesn't trigger
+- Check GitHub Actions permissions
+- For private repos, ensure GITHUB_TOKEN is set
+- View logs at: https://github.com/dfelcey/sf-demo/actions
+
+### Device Login fails
+- Make sure you visit the URL within 10 minutes
+- Verify the code matches exactly (case-sensitive)
+- Check that your Salesforce org URL is correct
+
+### Deployment fails
+- Check GitHub Actions logs for errors
+- Verify your Salesforce org has deployment permissions
+- Ensure metadata is valid
+
+## Salesforce DX Resources
+
 - [Salesforce DX Developer Guide](https://developer.salesforce.com/docs/atlas.en-us.sfdx_dev.meta/sfdx_dev/sfdx_dev_intro.htm)
+- [Salesforce CLI Setup Guide](https://developer.salesforce.com/docs/atlas.en-us.sfdx_setup.meta/sfdx_setup/sfdx_setup_intro.htm)
 - [Salesforce CLI Command Reference](https://developer.salesforce.com/docs/atlas.en-us.sfdx_cli_reference.meta/sfdx_cli_reference/cli_reference.htm)
