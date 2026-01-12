@@ -403,8 +403,7 @@ else
     echo "3. For private repos, set GITHUB_TOKEN in .env file"
     echo "4. Test manually: https://github.com/${GITHUB_OWNER}/${GITHUB_REPO}/actions/workflows/${WORKFLOW_FILE}"
     exit 1
-fi
-    
+else
     # Function to get workflow run status
     get_workflow_status() {
         local run_id=$1
