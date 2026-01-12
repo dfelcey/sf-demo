@@ -14,14 +14,31 @@ jobs:
 
       - name: Start Interactive Login
         id: login
+        timeout-minutes: 10
         run: |
+          echo "=========================================="
+          echo "🔐 DEVICE LOGIN REQUIRED"
+          echo "=========================================="
           echo "Please watch the logs below for the Device Login code!"
+          echo "You will need to visit the URL and enter the code to authenticate."
+          echo ""
           # This command will output a URL (https://login.salesforce.com/setup/connect) 
           # and a 8-digit code.
-          sf org login device --alias targetOrg --instance-url https://login.salesforce.com
+          sf org login device --alias targetOrg --instance-url https://login.salesforce.com || {
+            echo "❌ Device login failed or timed out"
+            echo "Please check the logs above for the device code and complete authentication"
+            exit 1
+          }
+          echo ""
+          echo "✅ Authentication successful!"
 
       - name: Deploy Assets
         run: |
+          echo "🚀 Starting deployment to Salesforce..."
           # This runs as soon as you finish the login on your machine
-          sf project deploy start --source-dir force-app --target-org targetOrg
+          sf project deploy start --source-dir force-app --target-org targetOrg --wait 10 || {
+            echo "❌ Deployment failed"
+            exit 1
+          }
+          echo "✅ Deployment completed successfully!"
 
