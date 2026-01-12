@@ -400,8 +400,12 @@ if [ -n "$BODY" ]; then
     log_info "Response Body: $BODY"
 fi
 
-# Verify the workflow was actually triggered by checking for a new run
 if [ "$HTTP_CODE" -eq 204 ]; then
+    log_success "Workflow triggered successfully (HTTP 204)"
+    echo "✅ Workflow triggered successfully!"
+    echo ""
+    
+    # Verify the workflow run was created and get its ID
     log_info "Verifying workflow run was created..."
     sleep 2  # Give GitHub a moment to create the run
     
@@ -419,36 +423,26 @@ if [ "$HTTP_CODE" -eq 204 ]; then
             "https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/actions/workflows/${WORKFLOW_FILE}/runs?per_page=1" 2>/dev/null)
     fi
     
-    LATEST_RUN_ID=$(echo "$RUNS_CHECK" | jq -r '.workflow_runs[0].id // empty' 2>/dev/null)
+    RUN_ID=$(echo "$RUNS_CHECK" | jq -r '.workflow_runs[0].id // empty' 2>/dev/null)
     LATEST_RUN_STATUS=$(echo "$RUNS_CHECK" | jq -r '.workflow_runs[0].status // empty' 2>/dev/null)
     LATEST_RUN_CREATED=$(echo "$RUNS_CHECK" | jq -r '.workflow_runs[0].created_at // empty' 2>/dev/null)
     
-    if [ -n "$LATEST_RUN_ID" ]; then
+    if [ -n "$RUN_ID" ]; then
         log_success "Workflow run created!"
-        log_info "  Run ID: $LATEST_RUN_ID"
+        log_info "  Run ID: $RUN_ID"
         log_info "  Status: $LATEST_RUN_STATUS"
         log_info "  Created: $LATEST_RUN_CREATED"
         echo ""
         echo "✅ Workflow run confirmed!"
-        echo "  Run ID: $LATEST_RUN_ID"
+        echo "  Run ID: $RUN_ID"
         echo "  Status: $LATEST_RUN_STATUS"
-        echo "  View at: https://github.com/${GITHUB_OWNER}/${GITHUB_REPO}/actions/runs/${LATEST_RUN_ID}"
+        echo "  View at: https://github.com/${GITHUB_OWNER}/${GITHUB_REPO}/actions/runs/${RUN_ID}"
+        echo ""
     else
         log_warn "Workflow dispatch returned 204 but no run found yet"
-        log_warn "This might be normal - GitHub may take a few seconds to create the run"
+        log_warn "Will retry to find the run ID..."
+        RUN_ID=""
     fi
-fi
-
-if [ "$HTTP_CODE" -eq 204 ]; then
-    log_success "Workflow triggered successfully (HTTP 204)"
-    echo "✅ Workflow triggered successfully!"
-    echo ""
-    echo "View workflow runs at:"
-    echo "  https://github.com/${GITHUB_OWNER}/${GITHUB_REPO}/actions"
-    echo ""
-    log_info "Waiting for workflow to start..."
-    echo "Waiting for workflow to start..."
-    sleep 3
 else
     log_error "Failed to trigger workflow (HTTP $HTTP_CODE)"
     echo "❌ Failed to trigger workflow"
@@ -502,7 +496,7 @@ else
     exit 1
 fi
 
-# Only continue with monitoring if workflow was triggered successfully
+# Continue with monitoring if workflow was triggered successfully
 if [ "$HTTP_CODE" -eq 204 ]; then
     # Function to get workflow run status
     get_workflow_status() {
@@ -518,55 +512,38 @@ if [ "$HTTP_CODE" -eq 204 ]; then
         local status=$(curl -s "${headers[@]}" \
             -H "Accept: application/vnd.github+json" \
             -H "X-GitHub-Api-Version: 2022-11-28" \
-            "$api_url" | grep -o '"status":"[^"]*"' | head -1 | cut -d'"' -f4)
+            "$api_url" 2>/dev/null | jq -r '.status // empty' 2>/dev/null)
+        
+        if [ -z "$status" ]; then
+            # Fallback to grep if jq fails
+            status=$(curl -s "${headers[@]}" \
+                -H "Accept: application/vnd.github+json" \
+                -H "X-GitHub-Api-Version: 2022-11-28" \
+                "$api_url" 2>/dev/null | grep -o '"status":"[^"]*"' | head -1 | cut -d'"' -f4)
+        fi
         
         log_debug "Workflow status: ${status:-unknown}"
         echo "$status"
     }
     
-    # Function to get latest workflow run ID
+    # Function to get latest workflow run ID (if not already found)
     get_latest_run_id() {
-        local api_url="https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/actions/workflows/${WORKFLOW_FILE}/runs?per_page=1&status=in_progress"
+        local api_url="https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/actions/workflows/${WORKFLOW_FILE}/runs?per_page=1"
         local headers=()
         
         if [ -n "$GITHUB_TOKEN" ]; then
             headers+=("-H" "Authorization: Bearer ${GITHUB_TOKEN}")
         fi
         
-        log_debug "Fetching latest workflow run ID from: $api_url"
-        
-        # Try to get run ID from API response
         local response=$(curl -s "${headers[@]}" \
             -H "Accept: application/vnd.github+json" \
             -H "X-GitHub-Api-Version: 2022-11-28" \
-            "$api_url" 2>&1)
+            "$api_url" 2>/dev/null)
         
-        log_debug "API response length: ${#response} chars"
+        local run_id=$(echo "$response" | jq -r '.workflow_runs[0].id // empty' 2>/dev/null)
         
-        # Try multiple ways to extract the ID
-        local run_id=$(echo "$response" | grep -o '"id":[0-9]*' | head -1 | cut -d':' -f2)
-        
-        # If not found, try without status filter
         if [ -z "$run_id" ]; then
-            log_debug "Run ID not found with status filter, trying without filter..."
-            api_url="https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/actions/workflows/${WORKFLOW_FILE}/runs?per_page=1"
-            response=$(curl -s "${headers[@]}" \
-                -H "Accept: application/vnd.github+json" \
-                -H "X-GitHub-Api-Version: 2022-11-28" \
-                "$api_url" 2>&1)
             run_id=$(echo "$response" | grep -o '"id":[0-9]*' | head -1 | cut -d':' -f2)
-        fi
-        
-        # Try using jq if available
-        if [ -z "$run_id" ] && command -v jq &> /dev/null; then
-            log_debug "Trying jq to extract run ID..."
-            run_id=$(echo "$response" | jq -r '.workflow_runs[0].id // empty' 2>/dev/null)
-        fi
-        
-        if [ -n "$run_id" ]; then
-            log_debug "Found workflow run ID: $run_id"
-        else
-            log_debug "Workflow run ID not found in response"
         fi
         
         echo "$run_id"
@@ -582,10 +559,18 @@ if [ "$HTTP_CODE" -eq 204 ]; then
             headers+=("-H" "Authorization: Bearer ${GITHUB_TOKEN}")
         fi
         
-        curl -s "${headers[@]}" \
+        local job_response=$(curl -s "${headers[@]}" \
             -H "Accept: application/vnd.github+json" \
             -H "X-GitHub-Api-Version: 2022-11-28" \
-            "$api_url" | grep -o '"id":[0-9]*' | head -1 | cut -d':' -f2
+            "$api_url" 2>/dev/null)
+        
+        local job_id=$(echo "$job_response" | jq -r '.jobs[0].id // empty' 2>/dev/null)
+        
+        if [ -z "$job_id" ]; then
+            job_id=$(echo "$job_response" | grep -o '"id":[0-9]*' | head -1 | cut -d':' -f2)
+        fi
+        
+        echo "$job_id"
     }
     
     # Function to get logs and extract Device Login URL
@@ -603,10 +588,10 @@ if [ "$HTTP_CODE" -eq 204 ]; then
             -H "Accept: application/vnd.github+json" \
             -H "X-GitHub-Api-Version: 2022-11-28" \
             -H "Accept-Encoding: gzip" \
-            "$api_url" | gunzip 2>/dev/null || curl -s "${headers[@]}" \
+            "$api_url" 2>/dev/null | gunzip 2>/dev/null || curl -s "${headers[@]}" \
             -H "Accept: application/vnd.github+json" \
             -H "X-GitHub-Api-Version: 2022-11-28" \
-            "$api_url")
+            "$api_url" 2>/dev/null)
         
         # Extract Device Login URL (look for https://login.salesforce.com/setup/connect or similar)
         local url=$(echo "$logs" | grep -oE 'https://[^/]+/setup/connect[^[:space:]]*' | head -1)
@@ -633,49 +618,52 @@ if [ "$HTTP_CODE" -eq 204 ]; then
         fi
     }
     
-    # Get the workflow run ID (retry a few times as workflow might not appear immediately)
-    log_info "Finding workflow run ID..."
-    echo "Finding workflow run..."
-    RUN_ID=""
-    RETRY_COUNT=0
-    MAX_RETRIES=6
-    
-    while [ -z "$RUN_ID" ] && [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
-        RUN_ID=$(get_latest_run_id)
-        if [ -z "$RUN_ID" ]; then
-            RETRY_COUNT=$((RETRY_COUNT + 1))
-            if [ $RETRY_COUNT -lt $MAX_RETRIES ]; then
-                log_debug "Workflow run not found yet, retrying... (attempt $RETRY_COUNT/$MAX_RETRIES)"
-                echo "   Waiting for workflow to appear... (attempt $RETRY_COUNT/$MAX_RETRIES)"
-                sleep 2
-            fi
-        fi
-    done
-    
+    # Get the workflow run ID if not already found
     if [ -z "$RUN_ID" ]; then
-        log_error "Could not find workflow run ID after ${MAX_RETRIES} attempts"
-        echo "⚠️  Could not find workflow run ID after ${MAX_RETRIES} attempts"
-        echo ""
-        echo "This might be because:"
-        echo "- The workflow hasn't started yet (wait a few seconds)"
-        echo "- GitHub API rate limiting (if no token set)"
-        echo "- Private repo requires GITHUB_TOKEN in .env file"
-        echo ""
-        echo "View manually at: https://github.com/${GITHUB_OWNER}/${GITHUB_REPO}/actions"
-        echo ""
-        echo "You can still monitor the workflow there and complete Device Login manually."
-        exit 0
+        log_info "Finding workflow run ID..."
+        echo "Finding workflow run..."
+        RETRY_COUNT=0
+        MAX_RETRIES=6
+        
+        while [ -z "$RUN_ID" ] && [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+            RUN_ID=$(get_latest_run_id)
+            if [ -z "$RUN_ID" ]; then
+                RETRY_COUNT=$((RETRY_COUNT + 1))
+                if [ $RETRY_COUNT -lt $MAX_RETRIES ]; then
+                    log_debug "Workflow run not found yet, retrying... (attempt $RETRY_COUNT/$MAX_RETRIES)"
+                    echo "   Waiting for workflow to appear... (attempt $RETRY_COUNT/$MAX_RETRIES)"
+                    sleep 2
+                fi
+            fi
+        done
+        
+        if [ -z "$RUN_ID" ]; then
+            log_error "Could not find workflow run ID after ${MAX_RETRIES} attempts"
+            echo "⚠️  Could not find workflow run ID after ${MAX_RETRIES} attempts"
+            echo ""
+            echo "This might be because:"
+            echo "- The workflow hasn't started yet (wait a few seconds)"
+            echo "- GitHub API rate limiting (if no token set)"
+            echo "- Private repo requires GITHUB_TOKEN in .env file"
+            echo ""
+            echo "View manually at: https://github.com/${GITHUB_OWNER}/${GITHUB_REPO}/actions"
+            echo ""
+            echo "You can still monitor the workflow there and complete Device Login manually."
+            exit 0
+        fi
+        
+        log_success "Found workflow run ID: $RUN_ID"
     fi
     
-    log_success "Found workflow run ID: $RUN_ID"
-    
     RUN_URL="https://github.com/${GITHUB_OWNER}/${GITHUB_REPO}/actions/runs/${RUN_ID}"
-    echo "Workflow Run ID: ${RUN_ID}"
-    echo "View at: ${RUN_URL}"
     echo ""
     echo "=========================================="
     echo "📊 Deployment Progress"
     echo "=========================================="
+    echo ""
+    echo "Monitoring workflow progress..."
+    echo "Run ID: ${RUN_ID}"
+    echo "View at: ${RUN_URL}"
     echo ""
     
     # Poll for status updates and Device Login info
@@ -684,9 +672,6 @@ if [ "$HTTP_CODE" -eq 204 ]; then
     MAX_POLLS=120  # 10 minutes max (5 second intervals)
     DEVICE_LOGIN_OPENED=false
     JOB_ID=""
-    
-    echo "Monitoring workflow progress..."
-    echo ""
     
     while [ $POLL_COUNT -lt $MAX_POLLS ]; do
         STATUS=$(get_workflow_status "$RUN_ID")
