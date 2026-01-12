@@ -346,9 +346,64 @@ if [ "$HTTP_CODE" -eq 204 ]; then
     log_success "Workflow triggered successfully (HTTP 204)"
     echo "✅ Workflow triggered successfully!"
     echo ""
+    echo "View workflow runs at:"
+    echo "  https://github.com/${GITHUB_OWNER}/${GITHUB_REPO}/actions"
+    echo ""
     log_info "Waiting for workflow to start..."
     echo "Waiting for workflow to start..."
     sleep 3
+else
+    log_error "Failed to trigger workflow (HTTP $HTTP_CODE)"
+    echo "❌ Failed to trigger workflow"
+    echo "HTTP Status: ${HTTP_CODE}"
+    echo ""
+    
+    if [ -n "$BODY" ]; then
+        echo "Error details:"
+        echo "$BODY" | jq -r '.message // .' 2>/dev/null || echo "$BODY"
+        echo ""
+    fi
+    
+    case "$HTTP_CODE" in
+        401)
+            echo "Authentication failed (401)."
+            echo "- Check your GITHUB_TOKEN in .env file"
+            echo "- Ensure token has 'repo' scope"
+            echo "- Get a new token from: https://github.com/settings/tokens"
+            ;;
+        403)
+            echo "Access forbidden (403)."
+            echo "- Check repository permissions"
+            echo "- Ensure GITHUB_TOKEN has 'repo' scope"
+            echo "- For private repos, token is required"
+            ;;
+        404)
+            echo "Workflow not found (404)."
+            echo "- Verify workflow file exists: .github/workflows/${WORKFLOW_FILE}"
+            echo "- Check repository name: ${GITHUB_OWNER}/${GITHUB_REPO}"
+            echo "- Ensure workflow file is committed and pushed"
+            ;;
+        422)
+            echo "Validation failed (422)."
+            echo "- Check workflow inputs format"
+            echo "- Verify ref branch exists (main)"
+            echo "- Check payload structure"
+            ;;
+        *)
+            echo "Unexpected error."
+            echo "- Check GitHub API status: https://www.githubstatus.com"
+            echo "- Verify repository and workflow exist"
+            ;;
+    esac
+    
+    echo ""
+    echo "Troubleshooting steps:"
+    echo "1. Check workflow file exists: .github/workflows/${WORKFLOW_FILE}"
+    echo "2. Verify workflow is active: https://github.com/${GITHUB_OWNER}/${GITHUB_REPO}/actions"
+    echo "3. For private repos, set GITHUB_TOKEN in .env file"
+    echo "4. Test manually: https://github.com/${GITHUB_OWNER}/${GITHUB_REPO}/actions/workflows/${WORKFLOW_FILE}"
+    exit 1
+fi
     
     # Function to get workflow run status
     get_workflow_status() {
