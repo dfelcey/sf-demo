@@ -1,6 +1,6 @@
 # Salesforce DX Project: sf-demo
 
-A Salesforce project with automated deployment via GitHub Actions using Device Login (no Connected App required).
+A Salesforce project with automated deployment via GitHub Actions using browser-based authentication (no Connected App required).
 
 ## Quick Start
 
@@ -16,30 +16,31 @@ A Salesforce project with automated deployment via GitHub Actions using Device L
    ./trigger-deploy.sh https://test.salesforce.com  # For sandbox
    ```
 
-2. **Watch GitHub Actions:**
-   - Go to: https://github.com/dfelcey/sf-demo/actions
-   - Find the running workflow
-   - Watch the logs for a Device Login code
+2. **Authenticate:**
+   - The script will open your browser for Salesforce login
+   - Log in and authorize the deployment
+   - The script extracts your credentials and triggers the workflow
 
-3. **Authenticate:**
-   - Copy the URL and 8-digit code from the logs
-   - Visit the URL in your browser
-   - Enter the code and log in to Salesforce
-   - Deployment will proceed automatically
+3. **Watch GitHub Actions:**
+   - The script will show you the workflow run link
+   - It will automatically open in your browser
+   - Monitor the deployment progress in real-time
 
 ## How It Works
 
-1. **Trigger Script** → Triggers GitHub Actions workflow
-2. **GitHub Actions** → Installs Salesforce CLI automatically
-3. **Device Login** → Uses Salesforce Device Login (no Connected App needed)
-4. **Deployment** → Deploys your Salesforce project automatically
+1. **Trigger Script** → Authenticates you via browser login locally
+2. **Extract Credentials** → Gets access token from authenticated session
+3. **Trigger Workflow** → Sends credentials to GitHub Actions workflow
+4. **GitHub Actions** → Installs Salesforce CLI automatically
+5. **Authenticate** → Uses access token to authenticate (no Connected App needed)
+6. **Deploy** → Deploys your Salesforce project automatically
 
 ## Features
 
-- ✅ **No Connected App Required** - Uses Device Login
-- ✅ **Automatic CLI Installation** - Detects and installs dependencies
-- ✅ **Simple Authentication** - Just visit a URL and enter a code
-- ✅ **No Local CLI Needed** - Everything runs in GitHub Actions
+- ✅ **No Connected App Required** - Uses standard browser login session tokens
+- ✅ **Automatic CLI Installation** - Detects and installs dependencies in GitHub Actions
+- ✅ **Simple Authentication** - Browser login, no manual token management
+- ✅ **Real-time Monitoring** - Script shows deployment progress and opens workflow links
 
 ## Project Structure
 
@@ -75,10 +76,11 @@ For sandboxes, use:
 - For private repos, ensure GITHUB_TOKEN is set
 - View logs at: https://github.com/dfelcey/sf-demo/actions
 
-### Device Login fails
-- Make sure you visit the URL within 10 minutes
-- Verify the code matches exactly (case-sensitive)
-- Check that your Salesforce org URL is correct
+### Authentication fails
+- Make sure you're logged in to Salesforce locally (`sf org login web`)
+- Verify the org alias exists (`sf org list`)
+- Check that credentials were extracted successfully (run with `-v` flag)
+- Access tokens expire after ~2 hours - re-run the script if needed
 
 ### Deployment fails
 - Check GitHub Actions logs for errors
