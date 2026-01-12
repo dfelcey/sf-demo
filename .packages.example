@@ -1,0 +1,14 @@
+# Salesforce Package Installation File
+# Add one package ID per line (04t... for managed packages, 0Ho... for unlocked packages)
+# Lines starting with # are ignored
+# Empty lines are ignored
+
+# Example managed package:
+# 04t000000000000AAA
+
+# Example unlocked package:
+# 0Ho000000000000AAA
+
+# Example package version ID:
+# 04t000000000000BBB
+
