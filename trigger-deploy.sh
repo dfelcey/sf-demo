@@ -720,15 +720,4 @@ fi
     echo "2. Visit the URL"
     echo "3. Enter the code to authenticate"
     echo "4. Deployment will continue automatically"
-    
-else
-    log_error "Failed to trigger workflow"
-    log_error "HTTP Status Code: $HTTP_CODE"
-    log_error "Response Body: $BODY"
-    echo "❌ Failed to trigger workflow"
-    echo "HTTP Status: ${HTTP_CODE}"
-    echo "Response: ${BODY}"
-    echo ""
-    echo "If this is a private repository, you may need to set GITHUB_TOKEN in .env file"
-    exit 1
 fi
