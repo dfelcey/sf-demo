@@ -308,38 +308,82 @@ EOF
 fi
 
 log_info "Sending workflow dispatch request..."
-log_debug "Using authentication: ${GITHUB_TOKEN:+Bearer token}${GITHUB_TOKEN:-none}"
+log_info "API URL: $API_URL"
+log_info "Using authentication: ${GITHUB_TOKEN:+Bearer token}${GITHUB_TOKEN:-none}"
 
+# First, verify the workflow exists
+log_info "Verifying workflow exists..."
+WORKFLOW_CHECK_URL="https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/actions/workflows/${WORKFLOW_FILE}"
 if [ -n "$GITHUB_TOKEN" ]; then
-RESPONSE=$(curl -s -w "\n%{http_code}" -X POST \
-    -H "Accept: application/vnd.github+json" \
-    -H "Authorization: Bearer ${GITHUB_TOKEN}" \
-    -H "X-GitHub-Api-Version: 2022-11-28" \
+    WORKFLOW_CHECK=$(curl -s -w "\n%{http_code}" \
+        -H "Accept: application/vnd.github+json" \
+        -H "Authorization: Bearer ${GITHUB_TOKEN}" \
+        -H "X-GitHub-Api-Version: 2022-11-28" \
+        "$WORKFLOW_CHECK_URL" 2>&1)
+else
+    WORKFLOW_CHECK=$(curl -s -w "\n%{http_code}" \
+        -H "Accept: application/vnd.github+json" \
+        -H "X-GitHub-Api-Version: 2022-11-28" \
+        "$WORKFLOW_CHECK_URL" 2>&1)
+fi
+
+WORKFLOW_CHECK_CODE=$(echo "$WORKFLOW_CHECK" | tail -n1)
+WORKFLOW_CHECK_BODY=$(echo "$WORKFLOW_CHECK" | sed '$d')
+
+log_info "Workflow check HTTP Code: $WORKFLOW_CHECK_CODE"
+if [ "$WORKFLOW_CHECK_CODE" -eq 200 ]; then
+    log_success "Workflow file exists and is accessible"
+    WORKFLOW_ID=$(echo "$WORKFLOW_CHECK_BODY" | jq -r '.id // "unknown"' 2>/dev/null || echo "unknown")
+    log_info "Workflow ID: $WORKFLOW_ID"
+else
+    log_error "Failed to verify workflow exists (HTTP $WORKFLOW_CHECK_CODE)"
+    log_error "Response: $WORKFLOW_CHECK_BODY"
+    echo ""
+    echo "Troubleshooting:"
+    echo "- Check that the workflow file exists at: .github/workflows/${WORKFLOW_FILE}"
+    echo "- Verify repository name: ${GITHUB_OWNER}/${GITHUB_REPO}"
+    echo "- For private repos, ensure GITHUB_TOKEN is set with 'repo' scope"
+    exit 1
+fi
+
+# Now trigger the workflow
+log_info "Triggering workflow dispatch..."
+if [ -n "$GITHUB_TOKEN" ]; then
+    RESPONSE=$(curl -v -s -w "\n%{http_code}" -X POST \
+        -H "Accept: application/vnd.github+json" \
+        -H "Authorization: Bearer ${GITHUB_TOKEN}" \
+        -H "X-GitHub-Api-Version: 2022-11-28" \
         -H "Content-Type: application/json" \
         "${API_URL}" \
         -d "$PAYLOAD" 2>&1)
     CURL_EXIT_CODE=$?
 else
-    RESPONSE=$(curl -s -w "\n%{http_code}" -X POST \
+    RESPONSE=$(curl -v -s -w "\n%{http_code}" -X POST \
         -H "Accept: application/vnd.github+json" \
         -H "X-GitHub-Api-Version: 2022-11-28" \
         -H "Content-Type: application/json" \
-    "${API_URL}" \
+        "${API_URL}" \
         -d "$PAYLOAD" 2>&1)
     CURL_EXIT_CODE=$?
 fi
 
 if [ $CURL_EXIT_CODE -ne 0 ]; then
     log_error "curl command failed with exit code: $CURL_EXIT_CODE"
-    log_debug "curl response: $RESPONSE"
+    log_error "curl response: $RESPONSE"
+    echo ""
+    echo "Troubleshooting:"
+    echo "- Check your internet connection"
+    echo "- Verify GitHub API is accessible"
+    echo "- For private repos, ensure GITHUB_TOKEN is set"
+    exit 1
 fi
 
 HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
 BODY=$(echo "$RESPONSE" | sed '$d')
 
-log_debug "HTTP Response Code: $HTTP_CODE"
+log_info "HTTP Response Code: $HTTP_CODE"
 if [ -n "$BODY" ]; then
-    log_debug "Response Body: $BODY"
+    log_info "Response Body: $BODY"
 fi
 
 if [ "$HTTP_CODE" -eq 204 ]; then
@@ -352,8 +396,7 @@ if [ "$HTTP_CODE" -eq 204 ]; then
     log_info "Waiting for workflow to start..."
     echo "Waiting for workflow to start..."
     sleep 3
-    
-    # Function to get workflow run status
+else
     log_error "Failed to trigger workflow (HTTP $HTTP_CODE)"
     echo "❌ Failed to trigger workflow"
     echo "HTTP Status: ${HTTP_CODE}"
