@@ -42,9 +42,6 @@ $RECYCLE.BIN/
 # Local environment variables
 .env
 
-# Local scripts (not part of Salesforce project)
-trigger-deploy.sh
-
 # Python Salesforce Functions
 **/__pycache__/
 **/.venv/
