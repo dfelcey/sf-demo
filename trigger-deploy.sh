@@ -352,7 +352,8 @@ if [ "$HTTP_CODE" -eq 204 ]; then
     log_info "Waiting for workflow to start..."
     echo "Waiting for workflow to start..."
     sleep 3
-else
+    
+    # Function to get workflow run status
     log_error "Failed to trigger workflow (HTTP $HTTP_CODE)"
     echo "❌ Failed to trigger workflow"
     echo "HTTP Status: ${HTTP_CODE}"
@@ -403,7 +404,10 @@ else
     echo "3. For private repos, set GITHUB_TOKEN in .env file"
     echo "4. Test manually: https://github.com/${GITHUB_OWNER}/${GITHUB_REPO}/actions/workflows/${WORKFLOW_FILE}"
     exit 1
-else
+fi
+
+# Only continue with monitoring if workflow was triggered successfully
+if [ "$HTTP_CODE" -eq 204 ]; then
     # Function to get workflow run status
     get_workflow_status() {
         local run_id=$1
