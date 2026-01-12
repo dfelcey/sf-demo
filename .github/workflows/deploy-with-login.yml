@@ -140,11 +140,14 @@ jobs:
             echo "[$(date '+%Y-%m-%d %H:%M:%S')] Attempting to authenticate with access token..."
             echo ""
             
-            # Try access-token login
+            # Export access token as environment variable (required by sf CLI)
+            export SF_ACCESS_TOKEN
+            
+            # Try access-token login (CLI reads token from SF_ACCESS_TOKEN env var)
             LOGIN_OUTPUT=$(sf org login access-token \
               --alias targetOrg \
               --instance-url "$SF_INSTANCE_URL" \
-              --access-token "$SF_ACCESS_TOKEN" 2>&1)
+              --no-prompt 2>&1)
             LOGIN_EXIT_CODE=$?
             
             if [ $LOGIN_EXIT_CODE -eq 0 ]; then
