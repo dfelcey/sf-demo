@@ -4,7 +4,17 @@ A Salesforce project with automated deployment via GitHub Actions using browser-
 
 ## Quick Start
 
-### Deploy via GitHub Actions
+### Option 1: Simple Local Deployment (Recommended)
+
+**Deploy directly using your local CLI:**
+
+```bash
+./deploy-local.sh
+```
+
+This is the simplest approach - no GitHub Actions needed!
+
+### Option 2: Deploy via GitHub Actions
 
 1. **Run the trigger script:**
    ```bash
@@ -26,6 +36,30 @@ A Salesforce project with automated deployment via GitHub Actions using browser-
    - It will automatically open in your browser
    - Monitor the deployment progress in real-time
 
+### Package Management & Additional Tasks
+
+**Install packages, run tests, manage scratch orgs:**
+
+```bash
+# Install a package
+./manage-packages.sh install -p 04t000000000000
+
+# List installed packages
+./manage-packages.sh list-installed
+
+# Run Apex tests
+./manage-packages.sh run-tests -t RunLocalTests
+
+# Create a scratch org
+./manage-packages.sh create-scratch -a my-scratch
+
+# Validate deployment (dry-run)
+./manage-packages.sh validate
+
+# See all options
+./manage-packages.sh --help
+```
+
 ## How It Works
 
 1. **Trigger Script** → Authenticates you via browser login locally
@@ -46,7 +80,9 @@ A Salesforce project with automated deployment via GitHub Actions using browser-
 
 - `force-app/` - Salesforce metadata (custom objects, classes, etc.)
 - `.github/workflows/` - GitHub Actions workflow for deployment
-- `trigger-deploy.sh` - Script to trigger deployment
+- `deploy-local.sh` - Simple local deployment script (recommended)
+- `trigger-deploy.sh` - Script to trigger GitHub Actions deployment
+- `manage-packages.sh` - Package management and org tasks script
 - `config/` - Salesforce project configuration
 
 ## Configuration
