@@ -1,17 +1,11 @@
-name: Remote Deploy with Interactive Login
+name: Salesforce Deployment via Device Login
 on:
-  workflow_dispatch: # Allows the curl trigger with specific inputs
+  workflow_dispatch: # Allows manual trigger or API trigger
     inputs:
-      sf_access_token:
-        description: 'Salesforce Access Token (from authenticated org)'
-        required: false
-        type: string
       sf_instance_url:
         description: 'Salesforce Instance URL (e.g., https://login.salesforce.com)'
         required: false
         type: string
-  repository_dispatch:
-    types: [deploy]
 
 jobs:
   deploy:
@@ -84,7 +78,7 @@ jobs:
           echo ""
           
           # Get instance URL from input or use default
-          SF_INSTANCE_URL="${{ inputs.sf_instance_url || github.event.client_payload.sf_instance_url }}"
+          SF_INSTANCE_URL="${{ inputs.sf_instance_url }}"
           SF_INSTANCE_URL="${SF_INSTANCE_URL:-https://login.salesforce.com}"
           
           # Use device login (no Connected App needed)
