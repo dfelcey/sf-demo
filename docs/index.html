@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Salesforce Deployment Portal</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            padding: 40px;
+            max-width: 500px;
+            width: 100%;
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 500;
+            font-size: 14px;
+        }
+        input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+        input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        .btn {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin-top: 10px;
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.4);
+        }
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .status {
+            margin-top: 20px;
+            padding: 12px;
+            border-radius: 6px;
+            font-size: 14px;
+            display: none;
+        }
+        .status.info {
+            background: #e3f2fd;
+            color: #1976d2;
+            border: 1px solid #90caf9;
+        }
+        .status.success {
+            background: #e8f5e9;
+            color: #388e3c;
+            border: 1px solid #81c784;
+        }
+        .status.error {
+            background: #ffebee;
+            color: #c62828;
+            border: 1px solid #ef5350;
+        }
+        .help-text {
+            font-size: 12px;
+            color: #999;
+            margin-top: 5px;
+        }
+        .loading {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid #ffffff;
+            border-radius: 50%;
+            border-top-color: transparent;
+            animation: spin 0.8s linear infinite;
+            margin-right: 8px;
+            vertical-align: middle;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 Salesforce Deployment</h1>
+        <p class="subtitle">Deploy your Salesforce project to any org</p>
+        
+        <form id="deployForm">
+            <div class="form-group">
+                <label for="githubToken">GitHub Personal Access Token</label>
+                <input 
+                    type="password" 
+                    id="githubToken" 
+                    placeholder="ghp_xxxxxxxxxxxxx" 
+                    required
+                >
+                <div class="help-text">Required to trigger GitHub Actions workflow</div>
+            </div>
+            
+            <div class="form-group">
+                <label for="salesforceInstanceUrl">Salesforce Instance URL</label>
+                <input 
+                    type="text" 
+                    id="salesforceInstanceUrl" 
+                    placeholder="https://login.salesforce.com" 
+                    value="https://login.salesforce.com"
+                    required
+                >
+                <div class="help-text">Use https://test.salesforce.com for sandboxes</div>
+            </div>
+            
+            <div class="form-group">
+                <label for="connectedAppClientId">Connected App Client ID</label>
+                <input 
+                    type="text" 
+                    id="connectedAppClientId" 
+                    placeholder="3MVG9..." 
+                    required
+                >
+                <div class="help-text">From your Salesforce Connected App</div>
+            </div>
+            
+            <button type="submit" class="btn" id="deployBtn">
+                Authenticate & Deploy
+            </button>
+        </form>
+        
+        <div id="status" class="status"></div>
+    </div>
+
+    <script>
+        // Configuration
+        const GITHUB_OWNER = 'dfelcey';
+        const GITHUB_REPO = 'sf-demo';
+        const WORKFLOW_FILE = 'deploy-with-login.yml';
+        
+        // Check if we're returning from Salesforce OAuth
+        const urlParams = new URLSearchParams(window.location.hash.substring(1));
+        const accessToken = urlParams.get('access_token');
+        const instanceUrl = urlParams.get('instance_url');
+        const error = urlParams.get('error');
+        
+        if (error) {
+            showStatus('error', `OAuth Error: ${error}`);
+        } else if (accessToken && instanceUrl) {
+            // We have the token, now trigger GitHub Actions
+            const githubToken = sessionStorage.getItem('githubToken');
+            if (githubToken) {
+                triggerWorkflow(githubToken, accessToken, instanceUrl);
+            } else {
+                showStatus('error', 'GitHub token not found. Please try again.');
+            }
+        }
+        
+        // Handle form submission
+        document.getElementById('deployForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const githubToken = document.getElementById('githubToken').value;
+            const instanceUrl = document.getElementById('salesforceInstanceUrl').value;
+            const clientId = document.getElementById('connectedAppClientId').value;
+            
+            // Store GitHub token for after OAuth callback
+            sessionStorage.setItem('githubToken', githubToken);
+            
+            // Redirect to Salesforce OAuth
+            const redirectUri = encodeURIComponent(window.location.origin + window.location.pathname);
+            const oauthUrl = `${instanceUrl}/services/oauth2/authorize?` +
+                `response_type=token` +
+                `&client_id=${encodeURIComponent(clientId)}` +
+                `&redirect_uri=${redirectUri}` +
+                `&scope=api refresh_token` +
+                `&prompt=login`;
+            
+            window.location.href = oauthUrl;
+        });
+        
+        async function triggerWorkflow(githubToken, sfAccessToken, sfInstanceUrl) {
+            const btn = document.getElementById('deployBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="loading"></span> Triggering deployment...';
+            
+            showStatus('info', 'Triggering GitHub Actions workflow...');
+            
+            try {
+                const apiUrl = `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/actions/workflows/${WORKFLOW_FILE}/dispatches`;
+                
+                const payload = {
+                    ref: 'main',
+                    inputs: {
+                        sf_access_token: sfAccessToken,
+                        sf_instance_url: sfInstanceUrl
+                    }
+                };
+                
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Accept': 'application/vnd.github+json',
+                        'Authorization': `Bearer ${githubToken}`,
+                        'X-GitHub-Api-Version': '2022-11-28',
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(payload)
+                });
+                
+                if (response.status === 204) {
+                    showStatus('success', `✅ Deployment triggered successfully!<br><br>View progress: <a href="https://github.com/${GITHUB_OWNER}/${GITHUB_REPO}/actions" target="_blank">GitHub Actions</a>`);
+                    btn.innerHTML = 'Deployment Triggered';
+                    // Clear sensitive data
+                    sessionStorage.removeItem('githubToken');
+                    // Clean URL
+                    window.history.replaceState({}, document.title, window.location.pathname);
+                } else {
+                    const errorText = await response.text();
+                    throw new Error(`HTTP ${response.status}: ${errorText}`);
+                }
+            } catch (error) {
+                showStatus('error', `❌ Failed to trigger workflow: ${error.message}`);
+                btn.disabled = false;
+                btn.innerHTML = 'Try Again';
+            }
+        }
+        
+        function showStatus(type, message) {
+            const statusDiv = document.getElementById('status');
+            statusDiv.className = `status ${type}`;
+            statusDiv.innerHTML = message;
+            statusDiv.style.display = 'block';
+        }
+    </script>
+</body>
+</html>
+
