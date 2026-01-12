@@ -1,0 +1,27 @@
+name: Remote Deploy with Interactive Login
+on:
+  workflow_dispatch: # Allows the curl trigger with specific inputs
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Project
+        uses: actions/checkout@v4
+
+      - name: Install Salesforce CLI
+        run: npm install -g @salesforce/cli
+
+      - name: Start Interactive Login
+        id: login
+        run: |
+          echo "Please watch the logs below for the Device Login code!"
+          # This command will output a URL (https://login.salesforce.com/setup/connect) 
+          # and a 8-digit code.
+          sf org login device --alias targetOrg --instance-url https://login.salesforce.com
+
+      - name: Deploy Assets
+        run: |
+          # This runs as soon as you finish the login on your machine
+          sf project deploy start --source-dir force-app --target-org targetOrg
+
