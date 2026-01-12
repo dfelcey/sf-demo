@@ -14,30 +14,31 @@
    ./trigger-deploy.sh https://test.salesforce.com
    ```
 
-3. **Watch GitHub Actions:**
-   - Go to: https://github.com/dfelcey/sf-demo/actions
-   - Find the running workflow
-   - Watch the logs for a Device Login code
+3. **Authenticate:**
+   - The script will open your browser for Salesforce login
+   - Log in and authorize the deployment
+   - Credentials are extracted automatically
 
-4. **Authenticate:**
-   - Copy the URL and 8-digit code from the logs
-   - Visit the URL in your browser
-   - Enter the code and log in to Salesforce
-   - Deployment will proceed automatically
+4. **Watch GitHub Actions:**
+   - The script shows the workflow run link
+   - It automatically opens in your browser
+   - Monitor deployment progress in real-time
 
 ## How It Works
 
-1. **Trigger Script** → Calls GitHub Actions API to start workflow
-2. **GitHub Actions** → Automatically installs Salesforce CLI and dependencies
-3. **Device Login** → Uses Salesforce Device Login (no Connected App needed)
-4. **Deployment** → Deploys your Salesforce project automatically
+1. **Trigger Script** → Authenticates you via browser login locally
+2. **Extract Credentials** → Gets access token from authenticated session (no Connected App needed)
+3. **Trigger Workflow** → Sends credentials to GitHub Actions workflow
+4. **GitHub Actions** → Automatically installs Salesforce CLI and dependencies
+5. **Authenticate** → Uses access token to authenticate to Salesforce
+6. **Deployment** → Deploys your Salesforce project automatically
 
 ## Features
 
-- ✅ **No Connected App Required** - Uses Device Login
-- ✅ **No Local CLI Required** - Everything runs in GitHub Actions
+- ✅ **No Connected App Required** - Uses standard browser login session tokens
+- ✅ **No Local CLI Required** - Everything runs in GitHub Actions (except initial auth)
 - ✅ **Automatic Installation** - CLI and dependencies installed automatically
-- ✅ **Simple Authentication** - Just visit a URL and enter a code
+- ✅ **Simple Authentication** - Browser login, credentials handled automatically
 
 ## Configuration
 
@@ -65,11 +66,11 @@ Get a token from: https://github.com/settings/tokens
 - **Check permissions**: Ensure GitHub Actions is enabled
 - **View logs**: Go to https://github.com/dfelcey/sf-demo/actions
 
-### Device Login fails
-- **Timeout**: Make sure you visit the URL within 10 minutes
-- **Code mismatch**: Verify the code matches exactly (case-sensitive)
-- **Wrong URL**: Check that your Salesforce org URL is correct
-- **Network issues**: Ensure you can access Salesforce login page
+### Authentication fails
+- **Not logged in**: Run `sf org login web` first to authenticate locally
+- **Token expired**: Access tokens expire after ~2 hours - re-run the script
+- **Wrong org**: Verify the org alias exists (`sf org list`)
+- **Extraction failed**: Run with `-v` flag to see detailed credential extraction logs
 
 ### CLI Installation fails
 - **Node.js**: GitHub Actions runners include Node.js by default
@@ -83,14 +84,14 @@ Get a token from: https://github.com/settings/tokens
 
 ## Manual Workflow Trigger
 
-You can also trigger the workflow manually from GitHub:
+**Note:** The workflow requires credentials from the trigger script. Manual triggering from GitHub UI will fail because no credentials are provided.
 
-1. Go to: https://github.com/dfelcey/sf-demo/actions
-2. Select "Salesforce Deployment via Device Login"
-3. Click "Run workflow"
-4. Optionally set the instance URL
-5. Click "Run workflow"
-6. Follow the Device Login steps
+Always use the trigger script:
+```bash
+./trigger-deploy.sh
+```
+
+The script handles authentication and credential extraction automatically.
 
 ## Project Structure
 
