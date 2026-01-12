@@ -128,20 +128,23 @@
     <div class="container">
         <h1>🚀 Salesforce Deployment</h1>
         <p class="subtitle">Deploy your Salesforce project to any org</p>
-        <p class="subtitle" style="font-size: 12px; color: #999; margin-top: -20px;">
-            Enter credentials once, then it will auto-redirect to Salesforce login
-        </p>
         
-        <form id="deployForm">
+        <div id="autoRedirectContainer" style="display: none;">
+            <p style="text-align: center; color: #666; margin: 20px 0;">
+                Redirecting to Salesforce login...
+            </p>
+        </div>
+        
+        <form id="deployForm" style="display: none;">
             <div class="form-group">
-                <label for="githubToken">GitHub Personal Access Token</label>
+                <label for="connectedAppClientId">Connected App Client ID</label>
                 <input 
-                    type="password" 
-                    id="githubToken" 
-                    placeholder="ghp_xxxxxxxxxxxxx" 
+                    type="text" 
+                    id="connectedAppClientId" 
+                    placeholder="3MVG9..." 
                     required
                 >
-                <div class="help-text">Required to trigger GitHub Actions workflow (saved for next time)</div>
+                <div class="help-text">From your Salesforce Connected App</div>
             </div>
             
             <div class="form-group">
@@ -153,23 +156,9 @@
                 <div class="help-text">Select your Salesforce environment</div>
             </div>
             
-            <div class="form-group">
-                <label for="connectedAppClientId">Connected App Client ID</label>
-                <input 
-                    type="text" 
-                    id="connectedAppClientId" 
-                    placeholder="3MVG9..." 
-                    required
-                >
-                <div class="help-text">From your Salesforce Connected App (saved for next time)</div>
-            </div>
-            
             <button type="submit" class="btn" id="deployBtn">
                 <span id="btnText">Login to Salesforce & Deploy</span>
             </button>
-            <div id="autoRedirectMsg" style="display: none; margin-top: 10px; font-size: 12px; color: #666;">
-                Credentials saved! Next time this page will auto-redirect to Salesforce login.
-            </div>
         </form>
         
         <div id="status" class="status"></div>
@@ -181,42 +170,70 @@
         const GITHUB_REPO = 'sf-demo';
         const WORKFLOW_FILE = 'deploy-with-login.yml';
         
+        // Get Connected App Client ID from URL parameter or use default
+        const urlParams = new URLSearchParams(window.location.search);
+        const clientIdFromUrl = urlParams.get('client_id');
+        
+        // Default instance URL (can be overridden via URL parameter)
+        const DEFAULT_INSTANCE_URL = 'https://login.salesforce.com';
+        const instanceUrlFromUrl = urlParams.get('instance_url') || DEFAULT_INSTANCE_URL;
+        
+        // Auto-redirect to Salesforce if we have Client ID
+        function autoRedirectToSalesforce() {
+            const clientId = clientIdFromUrl || localStorage.getItem('connectedAppClientId');
+            const instanceUrl = instanceUrlFromUrl || localStorage.getItem('salesforceInstanceUrl') || DEFAULT_INSTANCE_URL;
+            
+            if (clientId) {
+                // Show redirecting message
+                document.getElementById('autoRedirectContainer').style.display = 'block';
+                document.getElementById('deployForm').style.display = 'none';
+                
+                // Redirect immediately to Salesforce OAuth
+                const redirectUri = encodeURIComponent(window.location.origin + window.location.pathname);
+                const oauthUrl = `${instanceUrl}/services/oauth2/authorize?` +
+                    `response_type=token` +
+                    `&client_id=${encodeURIComponent(clientId)}` +
+                    `&redirect_uri=${redirectUri}` +
+                    `&scope=api refresh_token` +
+                    `&prompt=login`;
+                
+                // Redirect immediately
+                window.location.href = oauthUrl;
+                return true;
+            }
+            return false;
+        }
+        
         // Load saved credentials from localStorage
         function loadSavedCredentials() {
-            const savedGithubToken = localStorage.getItem('githubToken');
             const savedClientId = localStorage.getItem('connectedAppClientId');
             const savedInstanceUrl = localStorage.getItem('salesforceInstanceUrl');
             
-            if (savedGithubToken) {
-                document.getElementById('githubToken').value = savedGithubToken;
-            }
-            if (savedClientId) {
+            // Show form if Client ID not available
+            document.getElementById('deployForm').style.display = 'block';
+            
+            if (savedClientId && !clientIdFromUrl) {
                 document.getElementById('connectedAppClientId').value = savedClientId;
             }
-            if (savedInstanceUrl) {
+            if (savedInstanceUrl && !instanceUrlFromUrl) {
                 document.getElementById('salesforceInstanceUrl').value = savedInstanceUrl;
             }
             
-            // Auto-submit if all required fields are filled
-            if (savedGithubToken && savedClientId && savedInstanceUrl) {
-                // Show that we're auto-redirecting
-                showStatus('info', '✅ Credentials found! Redirecting to Salesforce login...');
-                // Small delay to ensure form is ready and user sees the message
-                setTimeout(() => {
-                    const form = document.getElementById('deployForm');
-                    if (form.checkValidity()) {
-                        form.dispatchEvent(new Event('submit'));
-                    }
-                }, 500);
+            // If Client ID provided via URL, populate it
+            if (clientIdFromUrl) {
+                document.getElementById('connectedAppClientId').value = clientIdFromUrl;
+            }
+            if (instanceUrlFromUrl && instanceUrlFromUrl !== DEFAULT_INSTANCE_URL) {
+                document.getElementById('salesforceInstanceUrl').value = instanceUrlFromUrl;
             }
         }
         
         // Check if we're returning from Salesforce OAuth
-        const urlParams = new URLSearchParams(window.location.hash.substring(1));
-        const accessToken = urlParams.get('access_token');
-        const instanceUrl = urlParams.get('instance_url');
-        const error = urlParams.get('error');
-        const errorDescription = urlParams.get('error_description');
+        const hashParams = new URLSearchParams(window.location.hash.substring(1));
+        const accessToken = hashParams.get('access_token');
+        const instanceUrl = hashParams.get('instance_url');
+        const error = hashParams.get('error');
+        const errorDescription = hashParams.get('error_description');
         
         if (error) {
             showStatus('error', `OAuth Error: ${error}${errorDescription ? ' - ' + decodeURIComponent(errorDescription) : ''}`);
@@ -228,41 +245,29 @@
             document.getElementById('deployForm').style.display = 'none';
             showStatus('info', '✅ Authenticated to Salesforce! Triggering deployment...');
             
-            // We have the token, now trigger GitHub Actions
-            const githubToken = localStorage.getItem('githubToken') || sessionStorage.getItem('githubToken');
-            const storedInstanceUrl = localStorage.getItem('salesforceInstanceUrl') || sessionStorage.getItem('instanceUrl');
+            // Trigger workflow - GitHub token not needed (workflow uses GitHub Secrets)
+            const storedInstanceUrl = instanceUrl || localStorage.getItem('salesforceInstanceUrl') || sessionStorage.getItem('instanceUrl') || DEFAULT_INSTANCE_URL;
             
-            if (githubToken) {
-                triggerWorkflow(githubToken, accessToken, instanceUrl || storedInstanceUrl);
-            } else {
-                showStatus('error', 'GitHub token not found. Please try again.');
-                document.getElementById('deployForm').style.display = 'block';
+            // Trigger workflow (uses GitHub Secrets for authentication)
+            triggerWorkflow(null, accessToken, storedInstanceUrl);
+        } else {
+            // Try to auto-redirect if we have Client ID
+            if (!autoRedirectToSalesforce()) {
+                // No Client ID, show form
                 loadSavedCredentials();
             }
-        } else {
-            // Load saved credentials on page load
-            loadSavedCredentials();
         }
         
         // Handle form submission
         document.getElementById('deployForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             
-            const githubToken = document.getElementById('githubToken').value;
             const instanceUrl = document.getElementById('salesforceInstanceUrl').value;
             const clientId = document.getElementById('connectedAppClientId').value;
             
             // Save to localStorage for future use
-            localStorage.setItem('githubToken', githubToken);
             localStorage.setItem('connectedAppClientId', clientId);
             localStorage.setItem('salesforceInstanceUrl', instanceUrl);
-            
-            // Also store in sessionStorage for this session
-            sessionStorage.setItem('githubToken', githubToken);
-            sessionStorage.setItem('instanceUrl', instanceUrl);
-            
-            // Show that credentials are saved
-            document.getElementById('autoRedirectMsg').style.display = 'block';
             
             // Show loading state
             const btn = document.getElementById('deployBtn');
@@ -285,8 +290,11 @@
         
         async function triggerWorkflow(githubToken, sfAccessToken, sfInstanceUrl) {
             const btn = document.getElementById('deployBtn');
-            btn.disabled = true;
-            btn.innerHTML = '<span class="loading"></span> Triggering deployment...';
+            if (btn) {
+                btn.disabled = true;
+                const btnText = document.getElementById('btnText');
+                if (btnText) btnText.innerHTML = '<span class="loading"></span> Triggering deployment...';
+            }
             
             showStatus('info', 'Triggering GitHub Actions workflow...');
             
@@ -301,34 +309,46 @@
                     }
                 };
                 
+                const headers = {
+                    'Accept': 'application/vnd.github+json',
+                    'X-GitHub-Api-Version': '2022-11-28',
+                    'Content-Type': 'application/json'
+                };
+                
+                // Add Authorization header only if token is provided
+                if (githubToken) {
+                    headers['Authorization'] = `Bearer ${githubToken}`;
+                }
+                
                 const response = await fetch(apiUrl, {
                     method: 'POST',
-                    headers: {
-                        'Accept': 'application/vnd.github+json',
-                        'Authorization': `Bearer ${githubToken}`,
-                        'X-GitHub-Api-Version': '2022-11-28',
-                        'Content-Type': 'application/json'
-                    },
+                    headers: headers,
                     body: JSON.stringify(payload)
                 });
                 
                 if (response.status === 204) {
                     showStatus('success', `✅ Deployment triggered successfully!<br><br>View progress: <a href="https://github.com/${GITHUB_OWNER}/${GITHUB_REPO}/actions" target="_blank" style="color: #1976d2; text-decoration: underline;">GitHub Actions</a>`);
-                    btn.innerHTML = '✅ Deployment Triggered';
-                    btn.disabled = false;
-                    // Clear session data (keep localStorage for next time)
-                    sessionStorage.removeItem('githubToken');
-                    sessionStorage.removeItem('instanceUrl');
+                    if (btn) {
+                        const btnText = document.getElementById('btnText');
+                        if (btnText) btnText.innerHTML = '✅ Deployment Triggered';
+                        btn.disabled = false;
+                    }
                     // Clean URL
                     window.history.replaceState({}, document.title, window.location.pathname);
                 } else {
                     const errorText = await response.text();
+                    if (response.status === 401 && !githubToken) {
+                        throw new Error('GitHub authentication required. Please provide a GitHub token or set up GitHub Secrets.');
+                    }
                     throw new Error(`HTTP ${response.status}: ${errorText}`);
                 }
             } catch (error) {
                 showStatus('error', `❌ Failed to trigger workflow: ${error.message}`);
-                btn.disabled = false;
-                btn.innerHTML = 'Try Again';
+                if (btn) {
+                    btn.disabled = false;
+                    const btnText = document.getElementById('btnText');
+                    if (btnText) btnText.innerHTML = 'Try Again';
+                }
             }
         }
         

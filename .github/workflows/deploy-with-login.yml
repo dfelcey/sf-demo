@@ -10,6 +10,8 @@ on:
         description: 'Salesforce Instance URL (e.g., https://login.salesforce.com)'
         required: false
         type: string
+  repository_dispatch:
+    types: [deploy]
 
 jobs:
   deploy:
@@ -29,13 +31,17 @@ jobs:
           echo "🔐 Salesforce Authentication"
           echo "=========================================="
           
-          # Check if credentials provided via workflow inputs (from local authentication)
-          if [ -n "${{ inputs.sf_access_token }}" ] && [ -n "${{ inputs.sf_instance_url }}" ]; then
-            echo "Using credentials from workflow input (local authentication)..."
+          # Get credentials from repository_dispatch or workflow_dispatch inputs
+          SF_ACCESS_TOKEN="${{ inputs.sf_access_token || github.event.client_payload.sf_access_token }}"
+          SF_INSTANCE_URL="${{ inputs.sf_instance_url || github.event.client_payload.sf_instance_url }}"
+          
+          # Check if credentials provided via inputs (from web portal)
+          if [ -n "$SF_ACCESS_TOKEN" ] && [ -n "$SF_INSTANCE_URL" ]; then
+            echo "Using credentials from web portal authentication..."
             sf org login access-token \
               --alias targetOrg \
-              --instance-url "${{ inputs.sf_instance_url }}" \
-              --access-token "${{ inputs.sf_access_token }}" || {
+              --instance-url "$SF_INSTANCE_URL" \
+              --access-token "$SF_ACCESS_TOKEN" || {
               echo "❌ Authentication with provided credentials failed"
               exit 1
             }
