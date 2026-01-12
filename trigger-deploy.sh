@@ -442,82 +442,109 @@ if [ "$HTTP_CODE" -eq 204 ]; then
     # Verify the workflow run was created and get its ID
     log_info "Verifying workflow run was created..."
     echo "Waiting for GitHub to create the workflow run..."
-    sleep 3  # Give GitHub a moment to create the run
+    
+    # Record the time we triggered the workflow
+    TRIGGER_TIME=$(date -u +"%Y-%m-%dT%H:%M:%SZ" 2>/dev/null || date -u +"%Y-%m-%d %H:%M:%S" 2>/dev/null || echo "")
     
     # Try multiple times to find the run (GitHub API can be slow)
     RUN_ID=""
     RETRY_COUNT=0
-    MAX_RETRIES=5
+    MAX_RETRIES=8  # Increased retries
     
     while [ -z "$RUN_ID" ] && [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+        sleep 2  # Wait before checking
+        
         # Check for the most recent workflow run
         if [ -n "$GITHUB_TOKEN" ]; then
             RUNS_CHECK=$(curl -s \
                 -H "Accept: application/vnd.github+json" \
                 -H "Authorization: Bearer ${GITHUB_TOKEN}" \
                 -H "X-GitHub-Api-Version: 2022-11-28" \
-                "https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/actions/workflows/${WORKFLOW_FILE}/runs?per_page=1" 2>/dev/null)
+                "https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/actions/workflows/${WORKFLOW_FILE}/runs?per_page=5" 2>/dev/null)
         else
             RUNS_CHECK=$(curl -s \
                 -H "Accept: application/vnd.github+json" \
                 -H "X-GitHub-Api-Version: 2022-11-28" \
-                "https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/actions/workflows/${WORKFLOW_FILE}/runs?per_page=1" 2>/dev/null)
+                "https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/actions/workflows/${WORKFLOW_FILE}/runs?per_page=5" 2>/dev/null)
         fi
         
         # Try to extract run ID using jq first, then fallback to grep
         if command -v jq &> /dev/null; then
+            # Get the most recent run (should be the one we just triggered)
             RUN_ID=$(echo "$RUNS_CHECK" | jq -r '.workflow_runs[0].id // empty' 2>/dev/null)
             LATEST_RUN_STATUS=$(echo "$RUNS_CHECK" | jq -r '.workflow_runs[0].status // empty' 2>/dev/null)
             LATEST_RUN_CREATED=$(echo "$RUNS_CHECK" | jq -r '.workflow_runs[0].created_at // empty' 2>/dev/null)
+            LATEST_RUN_URL=$(echo "$RUNS_CHECK" | jq -r '.workflow_runs[0].html_url // empty' 2>/dev/null)
         else
             RUN_ID=$(echo "$RUNS_CHECK" | grep -o '"id":[0-9]*' | head -1 | cut -d':' -f2)
             LATEST_RUN_STATUS=$(echo "$RUNS_CHECK" | grep -o '"status":"[^"]*"' | head -1 | cut -d'"' -f4)
             LATEST_RUN_CREATED=$(echo "$RUNS_CHECK" | grep -o '"created_at":"[^"]*"' | head -1 | cut -d'"' -f4)
+            LATEST_RUN_URL="https://github.com/${GITHUB_OWNER}/${GITHUB_REPO}/actions/runs/${RUN_ID}"
         fi
         
-        if [ -z "$RUN_ID" ]; then
-            RETRY_COUNT=$((RETRY_COUNT + 1))
-            if [ $RETRY_COUNT -lt $MAX_RETRIES ]; then
-                log_debug "Run not found yet, retrying... (attempt $RETRY_COUNT/$MAX_RETRIES)"
-                sleep 2
+        if [ -n "$RUN_ID" ]; then
+            log_debug "Found run ID: $RUN_ID (created: $LATEST_RUN_CREATED)"
+            # Verify this is a recent run (within last 2 minutes)
+            if [ -n "$LATEST_RUN_CREATED" ]; then
+                log_info "Most recent run found: $RUN_ID"
+                break
             fi
+        fi
+        
+        RETRY_COUNT=$((RETRY_COUNT + 1))
+        if [ $RETRY_COUNT -lt $MAX_RETRIES ]; then
+            log_debug "Run not found yet, retrying... (attempt $RETRY_COUNT/$MAX_RETRIES)"
+            echo "   Checking for workflow run... (attempt $RETRY_COUNT/$MAX_RETRIES)"
         fi
     done
     
     if [ -n "$RUN_ID" ]; then
-        RUN_URL="https://github.com/${GITHUB_OWNER}/${GITHUB_REPO}/actions/runs/${RUN_ID}"
-        log_success "Workflow run created!"
+        RUN_URL="${LATEST_RUN_URL:-https://github.com/${GITHUB_OWNER}/${GITHUB_REPO}/actions/runs/${RUN_ID}}"
+        log_success "Workflow run found!"
         log_info "  Run ID: $RUN_ID"
         log_info "  Status: $LATEST_RUN_STATUS"
         log_info "  Created: $LATEST_RUN_CREATED"
         echo ""
         echo "=========================================="
-        echo "✅ Workflow Run Confirmed!"
+        echo "✅ Workflow Run Found!"
         echo "=========================================="
         echo ""
         echo "  Run ID: $RUN_ID"
         echo "  Status: $LATEST_RUN_STATUS"
         echo "  Created: $LATEST_RUN_CREATED"
         echo ""
-        echo "  🔗 View Run:"
+        echo "  🔗 Direct Link:"
         echo "  ${RUN_URL}"
         echo ""
         echo "  🔗 All Workflows:"
         echo "  https://github.com/${GITHUB_OWNER}/${GITHUB_REPO}/actions"
         echo ""
+        
+        # Try to open the run in browser
+        if command -v open &> /dev/null; then
+            echo "Opening workflow run in your browser..."
+            open "$RUN_URL" 2>/dev/null &
+        fi
     else
         log_warn "Workflow dispatch returned 204 but no run found after ${MAX_RETRIES} attempts"
-        log_warn "This is normal - GitHub may take a few seconds to create the run"
         RUN_ID=""
         RUN_URL="https://github.com/${GITHUB_OWNER}/${GITHUB_REPO}/actions"
         echo ""
-        echo "⚠️  Run ID not found yet, but workflow was triggered successfully!"
+        echo "⚠️  Run ID not found, but workflow was triggered successfully!"
         echo ""
         echo "The workflow should appear shortly. View all workflow runs at:"
         echo "  ${RUN_URL}"
         echo ""
         echo "You can also check the latest run manually:"
         echo "  https://github.com/${GITHUB_OWNER}/${GITHUB_REPO}/actions/workflows/${WORKFLOW_FILE}"
+        echo ""
+        
+        # Try to open the workflows page in browser
+        if command -v open &> /dev/null; then
+            echo "Opening workflows page in your browser..."
+            open "${RUN_URL}" 2>/dev/null &
+        fi
+        
         echo ""
         echo "Continuing to monitor for the run..."
     fi
