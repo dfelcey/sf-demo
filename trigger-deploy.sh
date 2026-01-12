@@ -2,7 +2,8 @@
 # Trigger script for Salesforce deployment via GitHub Actions
 # This script authenticates locally via browser login, then triggers deployment
 
-set -e  # Exit on error (but we'll handle some errors manually)
+# Don't exit on error - we'll handle errors explicitly
+set +e
 
 # Configuration
 GITHUB_OWNER="dfelcey"
@@ -407,25 +408,48 @@ if [ "$HTTP_CODE" -eq 204 ]; then
     
     # Verify the workflow run was created and get its ID
     log_info "Verifying workflow run was created..."
-    sleep 2  # Give GitHub a moment to create the run
+    echo "Waiting for GitHub to create the workflow run..."
+    sleep 3  # Give GitHub a moment to create the run
     
-    # Check for the most recent workflow run
-    if [ -n "$GITHUB_TOKEN" ]; then
-        RUNS_CHECK=$(curl -s \
-            -H "Accept: application/vnd.github+json" \
-            -H "Authorization: Bearer ${GITHUB_TOKEN}" \
-            -H "X-GitHub-Api-Version: 2022-11-28" \
-            "https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/actions/workflows/${WORKFLOW_FILE}/runs?per_page=1" 2>/dev/null)
-    else
-        RUNS_CHECK=$(curl -s \
-            -H "Accept: application/vnd.github+json" \
-            -H "X-GitHub-Api-Version: 2022-11-28" \
-            "https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/actions/workflows/${WORKFLOW_FILE}/runs?per_page=1" 2>/dev/null)
-    fi
+    # Try multiple times to find the run (GitHub API can be slow)
+    RUN_ID=""
+    RETRY_COUNT=0
+    MAX_RETRIES=5
     
-    RUN_ID=$(echo "$RUNS_CHECK" | jq -r '.workflow_runs[0].id // empty' 2>/dev/null)
-    LATEST_RUN_STATUS=$(echo "$RUNS_CHECK" | jq -r '.workflow_runs[0].status // empty' 2>/dev/null)
-    LATEST_RUN_CREATED=$(echo "$RUNS_CHECK" | jq -r '.workflow_runs[0].created_at // empty' 2>/dev/null)
+    while [ -z "$RUN_ID" ] && [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+        # Check for the most recent workflow run
+        if [ -n "$GITHUB_TOKEN" ]; then
+            RUNS_CHECK=$(curl -s \
+                -H "Accept: application/vnd.github+json" \
+                -H "Authorization: Bearer ${GITHUB_TOKEN}" \
+                -H "X-GitHub-Api-Version: 2022-11-28" \
+                "https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/actions/workflows/${WORKFLOW_FILE}/runs?per_page=1" 2>/dev/null)
+        else
+            RUNS_CHECK=$(curl -s \
+                -H "Accept: application/vnd.github+json" \
+                -H "X-GitHub-Api-Version: 2022-11-28" \
+                "https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/actions/workflows/${WORKFLOW_FILE}/runs?per_page=1" 2>/dev/null)
+        fi
+        
+        # Try to extract run ID using jq first, then fallback to grep
+        if command -v jq &> /dev/null; then
+            RUN_ID=$(echo "$RUNS_CHECK" | jq -r '.workflow_runs[0].id // empty' 2>/dev/null)
+            LATEST_RUN_STATUS=$(echo "$RUNS_CHECK" | jq -r '.workflow_runs[0].status // empty' 2>/dev/null)
+            LATEST_RUN_CREATED=$(echo "$RUNS_CHECK" | jq -r '.workflow_runs[0].created_at // empty' 2>/dev/null)
+        else
+            RUN_ID=$(echo "$RUNS_CHECK" | grep -o '"id":[0-9]*' | head -1 | cut -d':' -f2)
+            LATEST_RUN_STATUS=$(echo "$RUNS_CHECK" | grep -o '"status":"[^"]*"' | head -1 | cut -d'"' -f4)
+            LATEST_RUN_CREATED=$(echo "$RUNS_CHECK" | grep -o '"created_at":"[^"]*"' | head -1 | cut -d'"' -f4)
+        fi
+        
+        if [ -z "$RUN_ID" ]; then
+            RETRY_COUNT=$((RETRY_COUNT + 1))
+            if [ $RETRY_COUNT -lt $MAX_RETRIES ]; then
+                log_debug "Run not found yet, retrying... (attempt $RETRY_COUNT/$MAX_RETRIES)"
+                sleep 2
+            fi
+        fi
+    done
     
     if [ -n "$RUN_ID" ]; then
         RUN_URL="https://github.com/${GITHUB_OWNER}/${GITHUB_REPO}/actions/runs/${RUN_ID}"
@@ -449,15 +473,20 @@ if [ "$HTTP_CODE" -eq 204 ]; then
         echo "  https://github.com/${GITHUB_OWNER}/${GITHUB_REPO}/actions"
         echo ""
     else
-        log_warn "Workflow dispatch returned 204 but no run found yet"
-        log_warn "Will retry to find the run ID..."
+        log_warn "Workflow dispatch returned 204 but no run found after ${MAX_RETRIES} attempts"
+        log_warn "This is normal - GitHub may take a few seconds to create the run"
         RUN_ID=""
         RUN_URL="https://github.com/${GITHUB_OWNER}/${GITHUB_REPO}/actions"
         echo ""
-        echo "⚠️  Run ID not found yet, but workflow was triggered"
-        echo "View all workflow runs at:"
+        echo "⚠️  Run ID not found yet, but workflow was triggered successfully!"
+        echo ""
+        echo "The workflow should appear shortly. View all workflow runs at:"
         echo "  ${RUN_URL}"
         echo ""
+        echo "You can also check the latest run manually:"
+        echo "  https://github.com/${GITHUB_OWNER}/${GITHUB_REPO}/actions/workflows/${WORKFLOW_FILE}"
+        echo ""
+        echo "Continuing to monitor for the run..."
     fi
 else
     log_error "Failed to trigger workflow (HTTP $HTTP_CODE)"
