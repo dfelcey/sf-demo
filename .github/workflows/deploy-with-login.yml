@@ -142,40 +142,16 @@ jobs:
             # Verify token format (should be "<org id>!<accesstoken>")
             # Token must contain "!" and be longer than just "test" or similar test values
             if [[ "$SF_ACCESS_TOKEN" != *"!"* ]] || [ ${#SF_ACCESS_TOKEN} -lt 20 ]; then
-              echo "[$(date '+%Y-%m-%d %H:%M:%S')] ⚠️  Warning: Access token doesn't appear to be in correct format"
+              echo "[$(date '+%Y-%m-%d %H:%M:%S')] ❌ Error: Access token doesn't appear to be in correct format"
               echo "Expected format: <org id>!<accesstoken>"
               echo "Token length: ${#SF_ACCESS_TOKEN} chars"
               echo "Token preview: ${SF_ACCESS_TOKEN:0:50}..."
               echo ""
-              echo "Token appears to be invalid or a test value. Falling back to Device Login..."
+              echo "This workflow requires credentials from the trigger script."
+              echo "Please run: ./trigger-deploy.sh"
               echo ""
-              
-              # Fall back to device login
-              SF_INSTANCE_URL="${SF_INSTANCE_URL:-https://login.salesforce.com}"
-              echo "[$(date '+%Y-%m-%d %H:%M:%S')] Using Device Login with instance URL: $SF_INSTANCE_URL"
-              echo ""
-              echo "📋 INSTRUCTIONS:"
-              echo "1. Watch the logs below for a Device Login code (8 digits)"
-              echo "2. Visit the URL shown below"
-              echo "3. Enter the code when prompted"
-              echo "4. Complete authentication on Salesforce"
-              echo ""
-              echo "=========================================="
-              echo ""
-              
-              sf org login device --alias targetOrg --instance-url "$SF_INSTANCE_URL" || {
-                  echo ""
-                  echo "[$(date '+%Y-%m-%d %H:%M:%S')] ❌ Device login failed or timed out"
-                  echo ""
-                  echo "Troubleshooting:"
-                  echo "- Check the logs above for the device code"
-                  echo "- Make sure you visit the URL and enter the code within 10 minutes"
-                  echo "- Verify your Salesforce org URL is correct"
-                  exit 1
-              }
-              
-              echo ""
-              echo "[$(date '+%Y-%m-%d %H:%M:%S')] ✅ Authentication successful via device login!"
+              echo "Device Login is deprecated and no longer available."
+              exit 1
             else
               # Token format looks correct, try access-token login
               echo "[$(date '+%Y-%m-%d %H:%M:%S')] Token format looks correct. Attempting to authenticate with access token..."
@@ -201,70 +177,32 @@ jobs:
                 echo "$LOGIN_OUTPUT"
                 echo ""
                 echo "This might happen if:"
-                echo "- The access token has expired"
+                echo "- The access token has expired (tokens expire after ~2 hours)"
                 echo "- The token format is incorrect (should be: <org id>!<accesstoken>)"
                 echo "- The instance URL doesn't match the token"
                 echo ""
-                echo "[$(date '+%Y-%m-%d %H:%M:%S')] Falling back to Device Login..."
+                echo "[$(date '+%Y-%m-%d %H:%M:%S')] ❌ Authentication failed"
                 echo ""
-                
-                # Fall back to device login
-                SF_INSTANCE_URL="${SF_INSTANCE_URL:-https://login.salesforce.com}"
-                echo "[$(date '+%Y-%m-%d %H:%M:%S')] Using Device Login with instance URL: $SF_INSTANCE_URL"
+                echo "Please run the trigger script again to get fresh credentials:"
+                echo "  ./trigger-deploy.sh"
                 echo ""
-                echo "📋 INSTRUCTIONS:"
-                echo "1. Watch the logs below for a Device Login code (8 digits)"
-                echo "2. Visit the URL shown below"
-                echo "3. Enter the code when prompted"
-                echo "4. Complete authentication on Salesforce"
-                echo ""
-                echo "=========================================="
-                echo ""
-                
-                sf org login device --alias targetOrg --instance-url "$SF_INSTANCE_URL" || {
-                    echo ""
-                    echo "[$(date '+%Y-%m-%d %H:%M:%S')] ❌ Device login failed or timed out"
-                    echo ""
-                    echo "Troubleshooting:"
-                    echo "- Check the logs above for the device code"
-                    echo "- Make sure you visit the URL and enter the code within 10 minutes"
-                    echo "- Verify your Salesforce org URL is correct"
-                    exit 1
-                }
-                
-                echo ""
-                echo "[$(date '+%Y-%m-%d %H:%M:%S')] ✅ Authentication successful via device login!"
+                echo "Device Login is deprecated and no longer available."
+                exit 1
               fi
             fi
           else
-            echo "No credentials provided. Using Device Login..."
+            echo "[$(date '+%Y-%m-%d %H:%M:%S')] ❌ Error: No credentials provided"
             echo ""
-            echo "📋 INSTRUCTIONS:"
-            echo "1. Watch the logs below for a Device Login code (8 digits)"
-            echo "2. Visit the URL shown below"
-            echo "3. Enter the code when prompted"
-            echo "4. Complete authentication on Salesforce"
+            echo "This workflow requires Salesforce credentials from the trigger script."
             echo ""
-            echo "=========================================="
+            echo "To deploy:"
+            echo "1. Run the trigger script locally: ./trigger-deploy.sh"
+            echo "2. The script will authenticate you via browser login"
+            echo "3. It will then trigger this workflow with your credentials"
             echo ""
-            
-            # Get instance URL from input or use default
-            SF_INSTANCE_URL="${SF_INSTANCE_URL:-https://login.salesforce.com}"
-            
-            # Use device login as fallback
-            sf org login device --alias targetOrg --instance-url "$SF_INSTANCE_URL" || {
-                echo ""
-                echo "❌ Device login failed or timed out"
-                echo ""
-                echo "Troubleshooting:"
-                echo "- Check the logs above for the device code"
-                echo "- Make sure you visit the URL and enter the code within 10 minutes"
-                echo "- Verify your Salesforce org URL is correct"
-                exit 1
-            }
-            
-            echo ""
-            echo "✅ Authentication successful via device login!"
+            echo "Device Login is deprecated and no longer available."
+            echo "You must use the trigger script to provide credentials."
+            exit 1
           fi
           
           # Verify authentication worked
