@@ -1,7 +1,11 @@
-name: Salesforce Deployment via Device Login
+name: Salesforce Deployment
 on:
   workflow_dispatch: # Allows manual trigger or API trigger
     inputs:
+      sf_access_token:
+        description: 'Salesforce Access Token (from browser login)'
+        required: false
+        type: string
       sf_instance_url:
         description: 'Salesforce Instance URL (e.g., https://login.salesforce.com)'
         required: false
@@ -65,52 +69,52 @@ jobs:
           echo "=========================================="
           echo "🔐 Salesforce Authentication"
           echo "=========================================="
-          echo ""
-          echo "Using Device Login (no Connected App required)"
-          echo ""
-          echo "📋 INSTRUCTIONS:"
-          echo "1. Watch the logs below for a Device Login code (8 digits)"
-          echo "2. Visit the URL shown below"
-          echo "3. Enter the code when prompted"
-          echo "4. Complete authentication on Salesforce"
-          echo ""
-          echo "=========================================="
-          echo ""
           
-          # Get instance URL from input or use default
+          # Get credentials from workflow inputs (from local browser login)
+          SF_ACCESS_TOKEN="${{ inputs.sf_access_token }}"
           SF_INSTANCE_URL="${{ inputs.sf_instance_url }}"
-          SF_INSTANCE_URL="${SF_INSTANCE_URL:-https://login.salesforce.com}"
           
-          # Use device login (no Connected App needed)
-          echo "Starting device login flow..."
-          echo "Instance URL: $SF_INSTANCE_URL"
-          echo ""
-          echo "=========================================="
-          echo "🔐 DEVICE LOGIN REQUIRED"
-          echo "=========================================="
-          echo ""
-          echo "The command below will output:"
-          echo "1. A URL to visit (e.g., https://login.salesforce.com/setup/connect)"
-          echo "2. An 8-digit code to enter"
-          echo ""
-          echo "Watch for these in the output below:"
-          echo "=========================================="
-          echo ""
-          
-          # Run device login and capture output
-          sf org login device --alias targetOrg --instance-url "$SF_INSTANCE_URL" 2>&1 | tee /tmp/device_login_output.txt || {
-              echo ""
-              echo "❌ Device login failed or timed out"
-              echo ""
-              echo "Troubleshooting:"
-              echo "- Check the logs above for the device code"
-              echo "- Make sure you visit the URL and enter the code within 10 minutes"
-              echo "- Verify your Salesforce org URL is correct"
+          # Check if credentials provided via inputs (from local browser login)
+          if [ -n "$SF_ACCESS_TOKEN" ] && [ -n "$SF_INSTANCE_URL" ]; then
+            echo "Using credentials from browser login..."
+            sf org login access-token \
+              --alias targetOrg \
+              --instance-url "$SF_INSTANCE_URL" \
+              --access-token "$SF_ACCESS_TOKEN" || {
+              echo "❌ Authentication with provided credentials failed"
               exit 1
-          }
-          
-          echo ""
-          echo "✅ Authentication successful via device login!"
+            }
+            echo "✅ Authentication successful using browser login credentials!"
+          else
+            echo "No credentials provided. Using Device Login as fallback..."
+            echo ""
+            echo "📋 INSTRUCTIONS:"
+            echo "1. Watch the logs below for a Device Login code (8 digits)"
+            echo "2. Visit the URL shown below"
+            echo "3. Enter the code when prompted"
+            echo "4. Complete authentication on Salesforce"
+            echo ""
+            echo "=========================================="
+            echo ""
+            
+            # Get instance URL from input or use default
+            SF_INSTANCE_URL="${SF_INSTANCE_URL:-https://login.salesforce.com}"
+            
+            # Use device login as fallback
+            sf org login device --alias targetOrg --instance-url "$SF_INSTANCE_URL" || {
+                echo ""
+                echo "❌ Device login failed or timed out"
+                echo ""
+                echo "Troubleshooting:"
+                echo "- Check the logs above for the device code"
+                echo "- Make sure you visit the URL and enter the code within 10 minutes"
+                echo "- Verify your Salesforce org URL is correct"
+                exit 1
+            }
+            
+            echo ""
+            echo "✅ Authentication successful via device login!"
+          fi
 
       - name: Deploy Assets
         run: |

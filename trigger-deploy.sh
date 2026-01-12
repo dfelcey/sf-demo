@@ -1,25 +1,121 @@
 #!/bin/bash
 # Trigger script for Salesforce deployment via GitHub Actions
-# This script triggers the GitHub Actions workflow which handles deployment
+# This script authenticates locally via browser login, then triggers deployment
 
 GITHUB_OWNER="dfelcey"
 GITHUB_REPO="sf-demo"
 WORKFLOW_FILE="deploy-with-login.yml"
 INSTANCE_URL="${1:-https://login.salesforce.com}"
+ORG_ALIAS="${2:-deploy-target}"
 
 echo "=========================================="
 echo "🚀 Salesforce Deployment"
 echo "=========================================="
 echo ""
-echo "This will trigger a GitHub Actions workflow that will:"
-echo "1. Install Salesforce CLI automatically"
-echo "2. Use Device Login for authentication (no Connected App needed)"
-echo "3. Deploy your Salesforce project"
+echo "This will:"
+echo "1. Authenticate to Salesforce via browser login"
+echo "2. Extract credentials from authenticated org"
+echo "3. Trigger GitHub Actions workflow with credentials"
+echo "4. Deploy your Salesforce project"
 echo ""
 echo "Instance URL: $INSTANCE_URL"
+echo "Org Alias: $ORG_ALIAS"
 echo ""
 
-# Check if GitHub token is available (optional - workflow can run without it for public repos)
+# Check if Salesforce CLI is installed
+if ! command -v sf &> /dev/null; then
+    echo "❌ Salesforce CLI (sf) is not installed!"
+    echo ""
+    echo "Please install it:"
+    echo "  npm install -g @salesforce/cli"
+    echo ""
+    echo "Or visit: https://developer.salesforce.com/tools/salesforcecli"
+    exit 1
+fi
+
+echo "Salesforce CLI found: $(sf --version)"
+echo ""
+
+# Check if already authenticated to the specified org
+echo "Checking for authenticated Salesforce org..."
+EXISTING_ORG=$(sf org list --json 2>/dev/null | grep -o "\"alias\":\"${ORG_ALIAS}\"" || echo "")
+
+if [ -z "$EXISTING_ORG" ]; then
+    echo "No authenticated org found with alias: $ORG_ALIAS"
+    echo ""
+    echo "=========================================="
+    echo "🔐 Salesforce Browser Login"
+    echo "=========================================="
+    echo ""
+    echo "This will open your browser to log in to Salesforce."
+    echo "After logging in, your credentials will be used for deployment."
+    echo ""
+    read -p "Press Enter to continue with Salesforce login..."
+    
+    sf org login web --alias "$ORG_ALIAS" --instance-url "$INSTANCE_URL" || {
+        echo "❌ Salesforce login failed"
+        exit 1
+    }
+    
+    echo ""
+    echo "✅ Successfully authenticated to Salesforce!"
+else
+    echo "Found authenticated org: $ORG_ALIAS"
+    echo ""
+    read -p "Do you want to login to a different org? (y/N): " -n 1 -r
+    echo ""
+    if [[ $REPLY =~ ^[Yy]$ ]]; then
+        sf org login web --alias "$ORG_ALIAS" --instance-url "$INSTANCE_URL" || {
+            echo "❌ Salesforce login failed"
+            exit 1
+        }
+        echo ""
+        echo "✅ Successfully authenticated to Salesforce!"
+    fi
+fi
+
+echo ""
+echo "=========================================="
+echo "📋 Extracting Org Credentials"
+echo "=========================================="
+echo ""
+
+# Check if jq is available for JSON parsing
+if ! command -v jq &> /dev/null; then
+    echo "⚠️  Warning: jq is not installed. Cannot extract credentials automatically."
+    echo "Please install jq: brew install jq (macOS) or apt-get install jq (Linux)"
+    echo ""
+    echo "You can manually get credentials with:"
+    echo "  sf org display --target-org $ORG_ALIAS --json | jq -r '.result.accessToken'"
+    exit 1
+fi
+
+# Extract credentials from the authenticated org
+ORG_INFO=$(sf org display --target-org "$ORG_ALIAS" --json 2>/dev/null)
+
+if [ -z "$ORG_INFO" ]; then
+    echo "❌ Failed to get org information"
+    exit 1
+fi
+
+SF_ACCESS_TOKEN=$(echo "$ORG_INFO" | jq -r '.result.accessToken // empty' 2>/dev/null)
+SF_INSTANCE_URL=$(echo "$ORG_INFO" | jq -r '.result.instanceUrl // empty' 2>/dev/null)
+ORG_USERNAME=$(echo "$ORG_INFO" | jq -r '.result.username // "unknown"' 2>/dev/null)
+ORG_ID=$(echo "$ORG_INFO" | jq -r '.result.id // "unknown"' 2>/dev/null)
+
+if [ -z "$SF_ACCESS_TOKEN" ] || [ -z "$SF_INSTANCE_URL" ]; then
+    echo "❌ Failed to extract credentials from org"
+    echo "Org info: $ORG_INFO"
+    exit 1
+fi
+
+echo "✅ Credentials extracted successfully!"
+echo "  Org: $ORG_USERNAME"
+echo "  Org ID: $ORG_ID"
+echo "  Instance URL: $SF_INSTANCE_URL"
+echo ""
+
+# Check if GitHub token is available
 if [ -f .env ]; then
     source .env
 fi
@@ -36,15 +132,26 @@ echo ""
 # Trigger the workflow
 API_URL="https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/actions/workflows/${WORKFLOW_FILE}/dispatches"
 
-PAYLOAD=$(cat <<EOF
+# Prepare payload with credentials
+if command -v jq &> /dev/null; then
+    PAYLOAD=$(jq -n \
+        --arg ref "main" \
+        --arg token "$SF_ACCESS_TOKEN" \
+        --arg url "$SF_INSTANCE_URL" \
+        '{ref: $ref, inputs: {sf_access_token: $token, sf_instance_url: $url}}')
+else
+    # Fallback: manual JSON (may fail with special characters)
+    PAYLOAD=$(cat <<EOF
 {
   "ref": "main",
   "inputs": {
-    "sf_instance_url": "${INSTANCE_URL}"
+    "sf_access_token": "${SF_ACCESS_TOKEN}",
+    "sf_instance_url": "${SF_INSTANCE_URL}"
   }
 }
 EOF
 )
+fi
 
 if [ -n "$GITHUB_TOKEN" ]; then
     RESPONSE=$(curl -s -w "\n%{http_code}" -X POST \
