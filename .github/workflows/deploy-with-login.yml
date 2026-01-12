@@ -137,16 +137,17 @@ jobs:
           # Check if credentials provided via inputs (from local browser login)
           if [ -n "$SF_ACCESS_TOKEN" ] && [ -n "$SF_INSTANCE_URL" ]; then
             echo "[$(date '+%Y-%m-%d %H:%M:%S')] Using credentials from browser login..."
-            echo "[$(date '+%Y-%m-%d %H:%M:%S')] Attempting to authenticate with access token..."
-            echo ""
+            echo "[$(date '+%Y-%m-%d %H:%M:%S')] Checking token format..."
             
             # Verify token format (should be "<org id>!<accesstoken>")
-            if [[ "$SF_ACCESS_TOKEN" != *"!"* ]]; then
+            # Token must contain "!" and be longer than just "test" or similar test values
+            if [[ "$SF_ACCESS_TOKEN" != *"!"* ]] || [ ${#SF_ACCESS_TOKEN} -lt 20 ]; then
               echo "[$(date '+%Y-%m-%d %H:%M:%S')] ⚠️  Warning: Access token doesn't appear to be in correct format"
               echo "Expected format: <org id>!<accesstoken>"
+              echo "Token length: ${#SF_ACCESS_TOKEN} chars"
               echo "Token preview: ${SF_ACCESS_TOKEN:0:50}..."
               echo ""
-              echo "Falling back to Device Login..."
+              echo "Token appears to be invalid or a test value. Falling back to Device Login..."
               echo ""
               
               # Fall back to device login
@@ -176,6 +177,10 @@ jobs:
               echo ""
               echo "[$(date '+%Y-%m-%d %H:%M:%S')] ✅ Authentication successful via device login!"
             else
+              # Token format looks correct, try access-token login
+              echo "[$(date '+%Y-%m-%d %H:%M:%S')] Token format looks correct. Attempting to authenticate with access token..."
+              echo ""
+              
               # Export access token as environment variable (required by sf CLI)
               export SF_ACCESS_TOKEN
               
