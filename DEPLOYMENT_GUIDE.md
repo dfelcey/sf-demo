@@ -1,86 +1,100 @@
-# Deployment Quick Start Guide
+# Deployment Guide
 
-## Prerequisites
+## Quick Start
 
-### 1. GitHub Personal Access Token
-1. Go to: https://github.com/settings/tokens
-2. Click "Generate new token" → "Generate new token (classic)"
-3. Name it (e.g., "sf-demo-deploy")
-4. Select scope: `repo`
-5. Click "Generate token"
-6. Copy the token (starts with `ghp_`)
+### Deploy to Salesforce
 
-### 2. Salesforce Connected App Client ID (Required)
+1. **Run the trigger script:**
+   ```bash
+   ./trigger-deploy.sh
+   ```
 
-The **Client ID** (also called **Consumer Key**) is a unique identifier for your Salesforce Connected App. It's required for OAuth authentication.
+2. **For sandbox environments:**
+   ```bash
+   ./trigger-deploy.sh https://test.salesforce.com
+   ```
 
-**How to Create and Get Your Client ID:**
+3. **Watch GitHub Actions:**
+   - Go to: https://github.com/dfelcey/sf-demo/actions
+   - Find the running workflow
+   - Watch the logs for a Device Login code
 
-1. In Salesforce Setup, go to **App Manager** → **New Connected App**
-2. Fill in the basic information:
-   - **Connected App Name**: `GitHub Actions Deploy` (or any name you prefer)
-   - **API Name**: `GitHub_Actions_Deploy` (auto-filled, can be changed)
-   - **Contact Email**: Your email address
-3. Enable OAuth Settings:
-   - Check **Enable OAuth Settings**
-   - **Callback URL**: `https://dfelcey.github.io/sf-demo/`
-     - ⚠️ **Important**: This must match exactly, including the trailing slash
-   - **Selected OAuth Scopes**: 
-     - `Access and manage your data (api)` - Required
-     - `Perform requests on your behalf at any time (refresh_token, offline_access)` - Recommended
-4. Click **Save**
-5. After saving, you'll see the **Consumer Key** (this is your Client ID)
-   - It looks like: `3MVG9xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx`
-   - Copy this value - you'll need it!
+4. **Authenticate:**
+   - Copy the URL and 8-digit code from the logs
+   - Visit the URL in your browser
+   - Enter the code and log in to Salesforce
+   - Deployment will proceed automatically
 
-**Note**: The Consumer Secret is not needed for this flow (we use OAuth implicit flow).
+## How It Works
 
-## Starting a Deployment
+1. **Trigger Script** → Calls GitHub Actions API to start workflow
+2. **GitHub Actions** → Automatically installs Salesforce CLI and dependencies
+3. **Device Login** → Uses Salesforce Device Login (no Connected App needed)
+4. **Deployment** → Deploys your Salesforce project automatically
 
-### Method 1: Using URL Parameter (Easiest)
+## Features
 
-Visit the deployment portal with your Client ID in the URL:
+- ✅ **No Connected App Required** - Uses Device Login
+- ✅ **No Local CLI Required** - Everything runs in GitHub Actions
+- ✅ **Automatic Installation** - CLI and dependencies installed automatically
+- ✅ **Simple Authentication** - Just visit a URL and enter a code
+
+## Configuration
+
+### Optional: GitHub Token
+
+For private repositories, create a `.env` file:
 ```
-https://dfelcey.github.io/sf-demo/?client_id=YOUR_CLIENT_ID
+GITHUB_TOKEN=ghp_your_token_here
 ```
 
-Replace `YOUR_CLIENT_ID` with your actual Consumer Key from Salesforce.
+Get a token from: https://github.com/settings/tokens
+- Select scope: `repo`
+- Copy the token (starts with `ghp_`)
 
-This will:
-1. Immediately redirect you to Salesforce login
-2. After you log in, automatically capture credentials
-3. Trigger deployment automatically
+### Instance URLs
 
-### Method 2: Using the Trigger Script
-
-1. Run: `./trigger-deploy.sh`
-2. If Client ID is saved: Automatically redirects to Salesforce login
-3. If Client ID not saved: Enter your Connected App Client ID once (it will be saved)
-4. Select your Salesforce environment (Production or Sandbox)
-5. Click "Login to Salesforce & Deploy"
-6. You'll be redirected to Salesforce login
-7. After login, deployment will trigger automatically
-
-**Note**: After the first use, your Client ID is saved and the page will auto-redirect on future visits.
+- **Production**: `https://login.salesforce.com` (default)
+- **Sandbox**: `https://test.salesforce.com`
+- **Custom**: Any Salesforce instance URL
 
 ## Troubleshooting
 
-### "GitHub token not found"
-- Make sure you entered your GitHub Personal Access Token
-- Check that the token has `repo` scope
+### Workflow doesn't trigger
+- **For private repos**: Set `GITHUB_TOKEN` in `.env` file
+- **Check permissions**: Ensure GitHub Actions is enabled
+- **View logs**: Go to https://github.com/dfelcey/sf-demo/actions
 
-### "OAuth Error"
-- Verify your Connected App Client ID is correct
-- Check that the Callback URL matches: `https://dfelcey.github.io/sf-demo/`
-- Ensure OAuth scopes are enabled
+### Device Login fails
+- **Timeout**: Make sure you visit the URL within 10 minutes
+- **Code mismatch**: Verify the code matches exactly (case-sensitive)
+- **Wrong URL**: Check that your Salesforce org URL is correct
+- **Network issues**: Ensure you can access Salesforce login page
 
-### "Failed to trigger workflow"
-- Verify your GitHub token is valid
-- Check GitHub Actions permissions
-- View logs at: https://github.com/dfelcey/sf-demo/actions
+### CLI Installation fails
+- **Node.js**: GitHub Actions runners include Node.js by default
+- **Permissions**: The workflow handles installation automatically
+- **Check logs**: View GitHub Actions logs for specific errors
 
-### Deployment fails in GitHub Actions
-- Check the workflow logs
-- Verify Salesforce credentials were passed correctly
-- Ensure your Salesforce org has the necessary permissions
+### Deployment fails
+- **Permissions**: Verify your Salesforce org has deployment permissions
+- **Metadata errors**: Check that your metadata is valid
+- **View logs**: Check GitHub Actions logs for detailed error messages
 
+## Manual Workflow Trigger
+
+You can also trigger the workflow manually from GitHub:
+
+1. Go to: https://github.com/dfelcey/sf-demo/actions
+2. Select "Salesforce Deployment via Device Login"
+3. Click "Run workflow"
+4. Optionally set the instance URL
+5. Click "Run workflow"
+6. Follow the Device Login steps
+
+## Project Structure
+
+- `force-app/` - Salesforce metadata to deploy
+- `.github/workflows/` - GitHub Actions workflow
+- `trigger-deploy.sh` - Script to trigger deployment
+- `config/` - Salesforce project configuration
