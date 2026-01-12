@@ -150,17 +150,29 @@ if [ "$HTTP_CODE" -eq 204 ]; then
             headers+=("-H" "Authorization: Bearer ${GITHUB_TOKEN}")
         fi
         
-        # Get logs (they come as gzip compressed)
+        # Get logs (they come as gzip compressed, need to decompress)
         local logs=$(curl -s "${headers[@]}" \
+            -H "Accept: application/vnd.github+json" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            -H "Accept-Encoding: gzip" \
+            "$api_url" | gunzip 2>/dev/null || curl -s "${headers[@]}" \
             -H "Accept: application/vnd.github+json" \
             -H "X-GitHub-Api-Version: 2022-11-28" \
             "$api_url")
         
         # Extract Device Login URL (look for https://login.salesforce.com/setup/connect or similar)
-        echo "$logs" | grep -oE 'https://[^/]+/setup/connect[^[:space:]]*' | head -1
+        local url=$(echo "$logs" | grep -oE 'https://[^/]+/setup/connect[^[:space:]]*' | head -1)
         
-        # Extract Device Login code (8 alphanumeric characters)
-        echo "$logs" | grep -oE '[A-Z0-9]{8}' | head -1
+        # Extract Device Login code (8 alphanumeric characters, usually after "code:" or standalone)
+        local code=$(echo "$logs" | grep -iE '(code|device code|enter code)[: ]*[A-Z0-9]{8}' | grep -oE '[A-Z0-9]{8}' | head -1)
+        
+        # If code not found, try finding any 8-character alphanumeric sequence
+        if [ -z "$code" ]; then
+            code=$(echo "$logs" | grep -oE '[A-Z0-9]{8}' | grep -vE '^[0-9]{8}$' | head -1)
+        fi
+        
+        echo "$url"
+        echo "$code"
     }
     
     # Function to open URL in browser
@@ -266,36 +278,65 @@ if [ "$HTTP_CODE" -eq 204 ]; then
         
         # Try to get Device Login info when workflow is in progress
         if [ "$STATUS" = "in_progress" ] && [ -n "$JOB_ID" ] && [ "$DEVICE_LOGIN_OPENED" = false ]; then
-            # Wait a bit for logs to be available (usually after 10-15 seconds)
-            if [ $POLL_COUNT -gt 15 ]; then
-                echo "   - Checking for Device Login..."
+            # Wait a bit for logs to be available (usually after 20-30 seconds for CLI install + device login)
+            if [ $POLL_COUNT -gt 20 ]; then
+                printf "\r   🔍 Checking for Device Login info... (${POLL_COUNT}s) "
                 LOGIN_INFO=$(get_device_login_info "$JOB_ID")
                 DEVICE_URL=$(echo "$LOGIN_INFO" | head -1)
                 DEVICE_CODE=$(echo "$LOGIN_INFO" | tail -1)
                 
                 if [ -n "$DEVICE_URL" ] && [ -n "$DEVICE_CODE" ]; then
                     echo ""
+                    echo ""
                     echo "=========================================="
-                    echo "🔐 Device Login Required"
+                    echo "🔐 SALESFORCE LOGIN REQUIRED"
                     echo "=========================================="
                     echo ""
-                    echo "Opening Salesforce login page..."
+                    echo "Device Login URL: ${DEVICE_URL}"
                     echo "Device Code: ${DEVICE_CODE}"
+                    echo ""
+                    echo "Opening Salesforce login page in your browser..."
                     echo ""
                     
                     # Open the URL in browser
-                    open_browser "$DEVICE_URL"
+                    if open_browser "$DEVICE_URL"; then
+                        echo "✅ Browser opened!"
+                    else
+                        echo "⚠️  Could not open browser automatically"
+                        echo "Please visit: ${DEVICE_URL}"
+                    fi
                     
-                    echo "✅ Opened: ${DEVICE_URL}"
                     echo ""
-                    echo "📋 Next Steps:"
-                    echo "1. Enter the code: ${DEVICE_CODE}"
-                    echo "2. Log in to Salesforce"
-                    echo "3. Click 'Allow' to authorize"
+                    echo "📋 INSTRUCTIONS:"
+                    echo "1. Enter the code above: ${DEVICE_CODE}"
+                    echo "2. Log in with your Salesforce credentials"
+                    echo "3. Click 'Allow' to authorize the deployment"
                     echo ""
-                    echo "Waiting for authentication..."
+                    echo "⏳ Waiting for authentication..."
+                    echo "   (The workflow will continue automatically after you log in)"
                     echo ""
                     
+                    DEVICE_LOGIN_OPENED=true
+                elif [ $POLL_COUNT -gt 60 ]; then
+                    # After 60 seconds, show manual instructions even if we can't extract the info
+                    echo ""
+                    echo ""
+                    echo "=========================================="
+                    echo "🔐 DEVICE LOGIN REQUIRED"
+                    echo "=========================================="
+                    echo ""
+                    echo "Please check the GitHub Actions logs for Device Login details:"
+                    echo "${RUN_URL}"
+                    echo ""
+                    echo "Look for:"
+                    echo "- A URL (usually https://login.salesforce.com/setup/connect)"
+                    echo "- An 8-digit code"
+                    echo ""
+                    echo "Then:"
+                    echo "1. Visit the URL"
+                    echo "2. Enter the code"
+                    echo "3. Log in to Salesforce"
+                    echo ""
                     DEVICE_LOGIN_OPENED=true
                 fi
             fi

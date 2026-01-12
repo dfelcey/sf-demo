@@ -85,8 +85,20 @@ jobs:
           echo "Starting device login flow..."
           echo "Instance URL: $SF_INSTANCE_URL"
           echo ""
+          echo "=========================================="
+          echo "🔐 DEVICE LOGIN REQUIRED"
+          echo "=========================================="
+          echo ""
+          echo "The command below will output:"
+          echo "1. A URL to visit (e.g., https://login.salesforce.com/setup/connect)"
+          echo "2. An 8-digit code to enter"
+          echo ""
+          echo "Watch for these in the output below:"
+          echo "=========================================="
+          echo ""
           
-          sf org login device --alias targetOrg --instance-url "$SF_INSTANCE_URL" || {
+          # Run device login and capture output
+          sf org login device --alias targetOrg --instance-url "$SF_INSTANCE_URL" 2>&1 | tee /tmp/device_login_output.txt || {
               echo ""
               echo "❌ Device login failed or timed out"
               echo ""
