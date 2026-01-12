@@ -8,16 +8,78 @@ set -e  # Exit on error (but we'll handle some errors manually)
 GITHUB_OWNER="dfelcey"
 GITHUB_REPO="sf-demo"
 WORKFLOW_FILE="deploy-with-login.yml"
-INSTANCE_URL="${1:-https://login.salesforce.com}"
-ORG_ALIAS="${2:-deploy-target}"
 
-# Logging function
+# Default values
+VERBOSE=false
+INSTANCE_URL="https://login.salesforce.com"
+ORG_ALIAS="deploy-target"
+
+# Parse command line arguments
+show_usage() {
+    cat << EOF
+Usage: $0 [OPTIONS] [INSTANCE_URL] [ORG_ALIAS]
+
+Trigger Salesforce deployment via GitHub Actions.
+
+Arguments:
+  INSTANCE_URL    Salesforce instance URL (default: https://login.salesforce.com)
+  ORG_ALIAS       Org alias for authentication (default: deploy-target)
+
+Options:
+  -v, --verbose   Enable verbose/debug logging
+  -h, --help      Show this help message
+
+Examples:
+  $0                                    # Use defaults
+  $0 -v                                 # Verbose mode with defaults
+  $0 https://test.salesforce.com        # Specify instance URL
+  $0 -v production-org                  # Verbose mode with org alias
+  $0 https://login.salesforce.com prod  # Specify both with defaults
+
+EOF
+}
+
+# Parse arguments
+POSITIONAL_ARGS=()
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        -v|--verbose)
+            VERBOSE=true
+            shift
+            ;;
+        -h|--help)
+            show_usage
+            exit 0
+            ;;
+        -*)
+            echo "Unknown option: $1"
+            show_usage
+            exit 1
+            ;;
+        *)
+            POSITIONAL_ARGS+=("$1")
+            shift
+            ;;
+    esac
+done
+
+# Set positional arguments
+if [ ${#POSITIONAL_ARGS[@]} -gt 0 ]; then
+    INSTANCE_URL="${POSITIONAL_ARGS[0]}"
+fi
+if [ ${#POSITIONAL_ARGS[@]} -gt 1 ]; then
+    ORG_ALIAS="${POSITIONAL_ARGS[1]}"
+fi
+
+# Logging functions
 log_info() {
     echo "[INFO] $(date '+%Y-%m-%d %H:%M:%S') - $*"
 }
 
 log_debug() {
-    echo "[DEBUG] $(date '+%Y-%m-%d %H:%M:%S') - $*" >&2
+    if [ "$VERBOSE" = true ]; then
+        echo "[DEBUG] $(date '+%Y-%m-%d %H:%M:%S') - $*" >&2
+    fi
 }
 
 log_error() {
@@ -37,6 +99,7 @@ echo "🚀 Salesforce Deployment"
 echo "=========================================="
 echo ""
 log_info "Starting deployment script"
+log_debug "Verbose mode: $VERBOSE"
 log_info "Configuration:"
 log_info "  GitHub Owner: $GITHUB_OWNER"
 log_info "  GitHub Repo: $GITHUB_REPO"
