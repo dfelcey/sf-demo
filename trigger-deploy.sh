@@ -348,28 +348,30 @@ fi
 
 # Now trigger the workflow
 log_info "Triggering workflow dispatch..."
+log_debug "Payload: $PAYLOAD"
+
 if [ -n "$GITHUB_TOKEN" ]; then
-    RESPONSE=$(curl -v -s -w "\n%{http_code}" -X POST \
+    # Use separate stderr for verbose output, stdout for response
+    RESPONSE=$(curl -s -w "\n%{http_code}" -X POST \
         -H "Accept: application/vnd.github+json" \
         -H "Authorization: Bearer ${GITHUB_TOKEN}" \
         -H "X-GitHub-Api-Version: 2022-11-28" \
         -H "Content-Type: application/json" \
         "${API_URL}" \
-        -d "$PAYLOAD" 2>&1)
+        -d "$PAYLOAD" 2>/dev/null)
     CURL_EXIT_CODE=$?
 else
-    RESPONSE=$(curl -v -s -w "\n%{http_code}" -X POST \
+    RESPONSE=$(curl -s -w "\n%{http_code}" -X POST \
         -H "Accept: application/vnd.github+json" \
         -H "X-GitHub-Api-Version: 2022-11-28" \
         -H "Content-Type: application/json" \
         "${API_URL}" \
-        -d "$PAYLOAD" 2>&1)
+        -d "$PAYLOAD" 2>/dev/null)
     CURL_EXIT_CODE=$?
 fi
 
 if [ $CURL_EXIT_CODE -ne 0 ]; then
     log_error "curl command failed with exit code: $CURL_EXIT_CODE"
-    log_error "curl response: $RESPONSE"
     echo ""
     echo "Troubleshooting:"
     echo "- Check your internet connection"
@@ -378,12 +380,52 @@ if [ $CURL_EXIT_CODE -ne 0 ]; then
     exit 1
 fi
 
+# Extract HTTP code (last line) and body (everything else)
 HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
 BODY=$(echo "$RESPONSE" | sed '$d')
 
 log_info "HTTP Response Code: $HTTP_CODE"
 if [ -n "$BODY" ]; then
     log_info "Response Body: $BODY"
+fi
+
+# Verify the workflow was actually triggered by checking for a new run
+if [ "$HTTP_CODE" -eq 204 ]; then
+    log_info "Verifying workflow run was created..."
+    sleep 2  # Give GitHub a moment to create the run
+    
+    # Check for the most recent workflow run
+    if [ -n "$GITHUB_TOKEN" ]; then
+        RUNS_CHECK=$(curl -s \
+            -H "Accept: application/vnd.github+json" \
+            -H "Authorization: Bearer ${GITHUB_TOKEN}" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            "https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/actions/workflows/${WORKFLOW_FILE}/runs?per_page=1" 2>/dev/null)
+    else
+        RUNS_CHECK=$(curl -s \
+            -H "Accept: application/vnd.github+json" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            "https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/actions/workflows/${WORKFLOW_FILE}/runs?per_page=1" 2>/dev/null)
+    fi
+    
+    LATEST_RUN_ID=$(echo "$RUNS_CHECK" | jq -r '.workflow_runs[0].id // empty' 2>/dev/null)
+    LATEST_RUN_STATUS=$(echo "$RUNS_CHECK" | jq -r '.workflow_runs[0].status // empty' 2>/dev/null)
+    LATEST_RUN_CREATED=$(echo "$RUNS_CHECK" | jq -r '.workflow_runs[0].created_at // empty' 2>/dev/null)
+    
+    if [ -n "$LATEST_RUN_ID" ]; then
+        log_success "Workflow run created!"
+        log_info "  Run ID: $LATEST_RUN_ID"
+        log_info "  Status: $LATEST_RUN_STATUS"
+        log_info "  Created: $LATEST_RUN_CREATED"
+        echo ""
+        echo "✅ Workflow run confirmed!"
+        echo "  Run ID: $LATEST_RUN_ID"
+        echo "  Status: $LATEST_RUN_STATUS"
+        echo "  View at: https://github.com/${GITHUB_OWNER}/${GITHUB_REPO}/actions/runs/${LATEST_RUN_ID}"
+    else
+        log_warn "Workflow dispatch returned 204 but no run found yet"
+        log_warn "This might be normal - GitHub may take a few seconds to create the run"
+    fi
 fi
 
 if [ "$HTTP_CODE" -eq 204 ]; then
