@@ -20,6 +20,7 @@ jobs:
 
       - name: Install Salesforce CLI
         run: |
+          set -e  # Exit on error
           echo "Checking for Salesforce CLI..."
           
           # Check if sf CLI is already installed
@@ -34,6 +35,8 @@ jobs:
               # Install Node.js (required for npm)
               curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
               sudo apt-get install -y nodejs
+              echo "✅ Node.js installed: $(node --version)"
+              echo "✅ npm installed: $(npm --version)"
             fi
             
             echo "Installing Salesforce CLI via npm..."
@@ -43,6 +46,8 @@ jobs:
               # Alternative: use npm with --force or try different approach
               npm install -g @salesforce/cli --force || {
                 echo "❌ Installation failed. Please check npm and Node.js versions."
+                echo "Node version: $(node --version)"
+                echo "npm version: $(npm --version)"
                 exit 1
               }
             }
@@ -54,6 +59,8 @@ jobs:
               echo "❌ Salesforce CLI installation completed but 'sf' command not found"
               echo "Checking PATH and installation location..."
               npm list -g @salesforce/cli || true
+              echo "PATH: $PATH"
+              echo "npm prefix: $(npm config get prefix)"
               exit 1
             fi
           fi
@@ -61,11 +68,13 @@ jobs:
           # Ensure sf is in PATH
           export PATH="$PATH:$(npm config get prefix)/bin"
           echo "Salesforce CLI ready: $(sf --version)"
+          echo "CLI location: $(which sf)"
 
       - name: Authenticate to Salesforce
         id: login
         timeout-minutes: 10
         run: |
+          set -e  # Exit on error
           echo "=========================================="
           echo "🔐 Salesforce Authentication"
           echo "=========================================="
@@ -74,19 +83,73 @@ jobs:
           SF_ACCESS_TOKEN="${{ inputs.sf_access_token }}"
           SF_INSTANCE_URL="${{ inputs.sf_instance_url }}"
           
+          # Debug: Check if inputs are provided (without showing token)
+          echo "Debug: Checking inputs..."
+          if [ -n "$SF_ACCESS_TOKEN" ]; then
+            echo "✅ Access token provided (length: ${#SF_ACCESS_TOKEN} chars)"
+          else
+            echo "⚠️  No access token provided"
+          fi
+          
+          if [ -n "$SF_INSTANCE_URL" ]; then
+            echo "✅ Instance URL provided: $SF_INSTANCE_URL"
+          else
+            echo "⚠️  No instance URL provided"
+          fi
+          echo ""
+          
           # Check if credentials provided via inputs (from local browser login)
           if [ -n "$SF_ACCESS_TOKEN" ] && [ -n "$SF_INSTANCE_URL" ]; then
             echo "Using credentials from browser login..."
-            sf org login access-token \
+            echo "Attempting to authenticate with access token..."
+            
+            # Try access-token login
+            if sf org login access-token \
               --alias targetOrg \
               --instance-url "$SF_INSTANCE_URL" \
-              --access-token "$SF_ACCESS_TOKEN" || {
-              echo "❌ Authentication with provided credentials failed"
-              exit 1
-            }
-            echo "✅ Authentication successful using browser login credentials!"
+              --access-token "$SF_ACCESS_TOKEN" 2>&1; then
+              echo "✅ Authentication successful using browser login credentials!"
+            else
+              echo ""
+              echo "❌ Authentication with access token failed"
+              echo ""
+              echo "This might happen if:"
+              echo "- The access token has expired"
+              echo "- The token format is incorrect"
+              echo "- The instance URL doesn't match the token"
+              echo ""
+              echo "Falling back to Device Login..."
+              echo ""
+              
+              # Fall back to device login
+              SF_INSTANCE_URL="${SF_INSTANCE_URL:-https://login.salesforce.com}"
+              echo "Using Device Login with instance URL: $SF_INSTANCE_URL"
+              echo ""
+              echo "📋 INSTRUCTIONS:"
+              echo "1. Watch the logs below for a Device Login code (8 digits)"
+              echo "2. Visit the URL shown below"
+              echo "3. Enter the code when prompted"
+              echo "4. Complete authentication on Salesforce"
+              echo ""
+              echo "=========================================="
+              echo ""
+              
+              sf org login device --alias targetOrg --instance-url "$SF_INSTANCE_URL" || {
+                  echo ""
+                  echo "❌ Device login failed or timed out"
+                  echo ""
+                  echo "Troubleshooting:"
+                  echo "- Check the logs above for the device code"
+                  echo "- Make sure you visit the URL and enter the code within 10 minutes"
+                  echo "- Verify your Salesforce org URL is correct"
+                  exit 1
+              }
+              
+              echo ""
+              echo "✅ Authentication successful via device login!"
+            fi
           else
-            echo "No credentials provided. Using Device Login as fallback..."
+            echo "No credentials provided. Using Device Login..."
             echo ""
             echo "📋 INSTRUCTIONS:"
             echo "1. Watch the logs below for a Device Login code (8 digits)"
@@ -115,14 +178,46 @@ jobs:
             echo ""
             echo "✅ Authentication successful via device login!"
           fi
+          
+          # Verify authentication worked
+          echo ""
+          echo "Verifying authentication..."
+          sf org display --target-org targetOrg --json > /dev/null 2>&1 || {
+            echo "❌ Failed to verify authentication"
+            echo "Org might not be authenticated properly"
+            exit 1
+          }
+          echo "✅ Authentication verified!"
 
       - name: Deploy Assets
         run: |
+          set -e  # Exit on error
           echo "🚀 Starting deployment to Salesforce..."
-          # This runs as soon as you finish the login on your machine
-          sf project deploy start --source-dir force-app --target-org targetOrg --wait 10 || {
-            echo "❌ Deployment failed"
+          
+          # Verify org is authenticated before deploying
+          echo "Verifying target org..."
+          sf org display --target-org targetOrg --json > /dev/null 2>&1 || {
+            echo "❌ Target org 'targetOrg' is not authenticated"
+            echo "Available orgs:"
+            sf org list || true
             exit 1
           }
+          
+          echo "✅ Target org verified"
+          echo ""
+          
+          # This runs as soon as you finish the login on your machine
+          echo "Deploying from force-app directory..."
+          sf project deploy start --source-dir force-app --target-org targetOrg --wait 10 || {
+            echo ""
+            echo "❌ Deployment failed"
+            echo ""
+            echo "Troubleshooting:"
+            echo "- Check the error messages above"
+            echo "- Verify the org has the necessary permissions"
+            echo "- Ensure the metadata is valid"
+            exit 1
+          }
+          echo ""
           echo "✅ Deployment completed successfully!"
 
