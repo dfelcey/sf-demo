@@ -90,17 +90,38 @@ if [ "$HTTP_CODE" -eq 204 ]; then
     
     # Function to get latest workflow run ID
     get_latest_run_id() {
-        local api_url="https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/actions/workflows/${WORKFLOW_FILE}/runs?per_page=1"
+        local api_url="https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/actions/workflows/${WORKFLOW_FILE}/runs?per_page=1&status=in_progress"
         local headers=()
         
         if [ -n "$GITHUB_TOKEN" ]; then
             headers+=("-H" "Authorization: Bearer ${GITHUB_TOKEN}")
         fi
         
-        curl -s "${headers[@]}" \
+        # Try to get run ID from API response
+        local response=$(curl -s "${headers[@]}" \
             -H "Accept: application/vnd.github+json" \
             -H "X-GitHub-Api-Version: 2022-11-28" \
-            "$api_url" | grep -o '"id":[0-9]*' | head -1 | cut -d':' -f2
+            "$api_url")
+        
+        # Try multiple ways to extract the ID
+        local run_id=$(echo "$response" | grep -o '"id":[0-9]*' | head -1 | cut -d':' -f2)
+        
+        # If not found, try without status filter
+        if [ -z "$run_id" ]; then
+            api_url="https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/actions/workflows/${WORKFLOW_FILE}/runs?per_page=1"
+            response=$(curl -s "${headers[@]}" \
+                -H "Accept: application/vnd.github+json" \
+                -H "X-GitHub-Api-Version: 2022-11-28" \
+                "$api_url")
+            run_id=$(echo "$response" | grep -o '"id":[0-9]*' | head -1 | cut -d':' -f2)
+        fi
+        
+        # Try using jq if available
+        if [ -z "$run_id" ] && command -v jq &> /dev/null; then
+            run_id=$(echo "$response" | jq -r '.workflow_runs[0].id // empty' 2>/dev/null)
+        fi
+        
+        echo "$run_id"
     }
     
     # Function to get job ID for a workflow run
@@ -152,13 +173,34 @@ if [ "$HTTP_CODE" -eq 204 ]; then
         fi
     }
     
-    # Get the workflow run ID
+    # Get the workflow run ID (retry a few times as workflow might not appear immediately)
     echo "Finding workflow run..."
-    RUN_ID=$(get_latest_run_id)
+    RUN_ID=""
+    RETRY_COUNT=0
+    MAX_RETRIES=6
+    
+    while [ -z "$RUN_ID" ] && [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+        RUN_ID=$(get_latest_run_id)
+        if [ -z "$RUN_ID" ]; then
+            RETRY_COUNT=$((RETRY_COUNT + 1))
+            if [ $RETRY_COUNT -lt $MAX_RETRIES ]; then
+                echo "   Waiting for workflow to appear... (attempt $RETRY_COUNT/$MAX_RETRIES)"
+                sleep 2
+            fi
+        fi
+    done
     
     if [ -z "$RUN_ID" ]; then
-        echo "⚠️  Could not find workflow run ID"
+        echo "⚠️  Could not find workflow run ID after ${MAX_RETRIES} attempts"
+        echo ""
+        echo "This might be because:"
+        echo "- The workflow hasn't started yet (wait a few seconds)"
+        echo "- GitHub API rate limiting (if no token set)"
+        echo "- Private repo requires GITHUB_TOKEN in .env file"
+        echo ""
         echo "View manually at: https://github.com/${GITHUB_OWNER}/${GITHUB_REPO}/actions"
+        echo ""
+        echo "You can still monitor the workflow there and complete Device Login manually."
         exit 0
     fi
     
