@@ -30,55 +30,40 @@ jobs:
           echo "=========================================="
           echo "🔐 Salesforce Authentication"
           echo "=========================================="
+          echo ""
+          echo "Using Device Login (no Connected App required)"
+          echo ""
+          echo "📋 INSTRUCTIONS:"
+          echo "1. Watch the logs below for a Device Login code (8 digits)"
+          echo "2. Visit the URL shown below"
+          echo "3. Enter the code when prompted"
+          echo "4. Complete authentication on Salesforce"
+          echo ""
+          echo "=========================================="
+          echo ""
           
-          # Get credentials from repository_dispatch or workflow_dispatch inputs
-          SF_ACCESS_TOKEN="${{ inputs.sf_access_token || github.event.client_payload.sf_access_token }}"
+          # Get instance URL from input or use default
           SF_INSTANCE_URL="${{ inputs.sf_instance_url || github.event.client_payload.sf_instance_url }}"
+          SF_INSTANCE_URL="${SF_INSTANCE_URL:-https://login.salesforce.com}"
           
-          # Check if credentials provided via inputs (from web portal)
-          if [ -n "$SF_ACCESS_TOKEN" ] && [ -n "$SF_INSTANCE_URL" ]; then
-            echo "Using credentials from web portal authentication..."
-            sf org login access-token \
-              --alias targetOrg \
-              --instance-url "$SF_INSTANCE_URL" \
-              --access-token "$SF_ACCESS_TOKEN" || {
-              echo "❌ Authentication with provided credentials failed"
-              exit 1
-            }
-            echo "✅ Authentication successful using provided credentials!"
-          # Check if access token is provided via secrets (fallback)
-          elif [ -n "${{ secrets.SF_ACCESS_TOKEN }}" ] && [ -n "${{ secrets.SF_INSTANCE_URL }}" ]; then
-            echo "Using GitHub Secrets (Access Token) for authentication..."
-            sf org login access-token \
-              --alias targetOrg \
-              --instance-url "${{ secrets.SF_INSTANCE_URL }}" \
-              --access-token "${{ secrets.SF_ACCESS_TOKEN }}" || {
-              echo "❌ Authentication with access token failed"
-              exit 1
-            }
-            echo "✅ Authentication successful using Access Token!"
-          else
-            echo "GitHub Secrets not configured. Using device login..."
-            echo "Please watch the logs below for the Device Login code!"
-            echo "You will need to visit the URL and enter the code to authenticate."
-            echo ""
-            echo "To use automatic authentication (no device login needed), set these GitHub Secrets:"
-            echo "  - SF_ACCESS_TOKEN: Your Salesforce access token"
-            echo "  - SF_INSTANCE_URL: Your instance URL (e.g., https://login.salesforce.com)"
-            echo ""
-            echo "You can get your access token after logging in locally with:"
-            echo "  sf org display --target-org <alias> --json | jq -r '.result.accessToken'"
-            echo ""
-            # This command will output a URL (https://login.salesforce.com/setup/connect) 
-            # and a 8-digit code.
-            sf org login device --alias targetOrg --instance-url https://login.salesforce.com || {
+          # Use device login (no Connected App needed)
+          echo "Starting device login flow..."
+          echo "Instance URL: $SF_INSTANCE_URL"
+          echo ""
+          
+          sf org login device --alias targetOrg --instance-url "$SF_INSTANCE_URL" || {
+              echo ""
               echo "❌ Device login failed or timed out"
-              echo "Please check the logs above for the device code and complete authentication"
+              echo ""
+              echo "Troubleshooting:"
+              echo "- Check the logs above for the device code"
+              echo "- Make sure you visit the URL and enter the code within 10 minutes"
+              echo "- Verify your Salesforce org URL is correct"
               exit 1
-            }
-            echo ""
-            echo "✅ Authentication successful via device login!"
-          fi
+          }
+          
+          echo ""
+          echo "✅ Authentication successful via device login!"
 
       - name: Deploy Assets
         run: |
