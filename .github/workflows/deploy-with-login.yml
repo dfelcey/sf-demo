@@ -1,9 +1,6 @@
 name: Remote Deploy with Interactive Login
 on:
-  push:
-    branches:
-      - main
-  workflow_dispatch: # Allows manual trigger with specific inputs
+  workflow_dispatch: # Allows the curl trigger with specific inputs
 
 jobs:
   deploy:
