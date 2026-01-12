@@ -47,7 +47,7 @@
             font-weight: 500;
             font-size: 14px;
         }
-        input {
+        input, select {
             width: 100%;
             padding: 12px;
             border: 2px solid #e0e0e0;
@@ -55,7 +55,7 @@
             font-size: 14px;
             transition: border-color 0.3s;
         }
-        input:focus {
+        input:focus, select:focus {
             outline: none;
             border-color: #667eea;
         }
@@ -143,14 +143,11 @@
             
             <div class="form-group">
                 <label for="salesforceInstanceUrl">Salesforce Instance URL</label>
-                <input 
-                    type="text" 
-                    id="salesforceInstanceUrl" 
-                    placeholder="https://login.salesforce.com" 
-                    value="https://login.salesforce.com"
-                    required
-                >
-                <div class="help-text">Use https://test.salesforce.com for sandboxes</div>
+                <select id="salesforceInstanceUrl" required>
+                    <option value="https://login.salesforce.com">Production (login.salesforce.com)</option>
+                    <option value="https://test.salesforce.com">Sandbox (test.salesforce.com)</option>
+                </select>
+                <div class="help-text">Select your Salesforce environment</div>
             </div>
             
             <div class="form-group">
@@ -165,7 +162,7 @@
             </div>
             
             <button type="submit" class="btn" id="deployBtn">
-                Authenticate & Deploy
+                Login to Salesforce & Deploy
             </button>
         </form>
         
@@ -183,16 +180,26 @@
         const accessToken = urlParams.get('access_token');
         const instanceUrl = urlParams.get('instance_url');
         const error = urlParams.get('error');
+        const errorDescription = urlParams.get('error_description');
         
         if (error) {
-            showStatus('error', `OAuth Error: ${error}`);
+            showStatus('error', `OAuth Error: ${error}${errorDescription ? ' - ' + decodeURIComponent(errorDescription) : ''}`);
+            // Clean URL
+            window.history.replaceState({}, document.title, window.location.pathname);
         } else if (accessToken && instanceUrl) {
+            // Hide form and show loading
+            document.getElementById('deployForm').style.display = 'none';
+            showStatus('info', '✅ Authenticated to Salesforce! Triggering deployment...');
+            
             // We have the token, now trigger GitHub Actions
             const githubToken = sessionStorage.getItem('githubToken');
+            const storedInstanceUrl = sessionStorage.getItem('instanceUrl');
+            
             if (githubToken) {
-                triggerWorkflow(githubToken, accessToken, instanceUrl);
+                triggerWorkflow(githubToken, accessToken, instanceUrl || storedInstanceUrl);
             } else {
                 showStatus('error', 'GitHub token not found. Please try again.');
+                document.getElementById('deployForm').style.display = 'block';
             }
         }
         
@@ -204,10 +211,16 @@
             const instanceUrl = document.getElementById('salesforceInstanceUrl').value;
             const clientId = document.getElementById('connectedAppClientId').value;
             
-            // Store GitHub token for after OAuth callback
+            // Store GitHub token and instance URL for after OAuth callback
             sessionStorage.setItem('githubToken', githubToken);
+            sessionStorage.setItem('instanceUrl', instanceUrl);
             
-            // Redirect to Salesforce OAuth
+            // Show loading state
+            const btn = document.getElementById('deployBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="loading"></span> Redirecting to Salesforce...';
+            
+            // Redirect to Salesforce OAuth - this will transparently take user to login.salesforce.com
             const redirectUri = encodeURIComponent(window.location.origin + window.location.pathname);
             const oauthUrl = `${instanceUrl}/services/oauth2/authorize?` +
                 `response_type=token` +
@@ -216,6 +229,7 @@
                 `&scope=api refresh_token` +
                 `&prompt=login`;
             
+            // Redirect immediately - user will login on Salesforce, then come back here
             window.location.href = oauthUrl;
         });
         
@@ -249,10 +263,12 @@
                 });
                 
                 if (response.status === 204) {
-                    showStatus('success', `✅ Deployment triggered successfully!<br><br>View progress: <a href="https://github.com/${GITHUB_OWNER}/${GITHUB_REPO}/actions" target="_blank">GitHub Actions</a>`);
-                    btn.innerHTML = 'Deployment Triggered';
+                    showStatus('success', `✅ Deployment triggered successfully!<br><br>View progress: <a href="https://github.com/${GITHUB_OWNER}/${GITHUB_REPO}/actions" target="_blank" style="color: #1976d2; text-decoration: underline;">GitHub Actions</a>`);
+                    btn.innerHTML = '✅ Deployment Triggered';
+                    btn.disabled = false;
                     // Clear sensitive data
                     sessionStorage.removeItem('githubToken');
+                    sessionStorage.removeItem('instanceUrl');
                     // Clean URL
                     window.history.replaceState({}, document.title, window.location.pathname);
                 } else {
