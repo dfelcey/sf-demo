@@ -128,6 +128,9 @@
     <div class="container">
         <h1>🚀 Salesforce Deployment</h1>
         <p class="subtitle">Deploy your Salesforce project to any org</p>
+        <p class="subtitle" style="font-size: 12px; color: #999; margin-top: -20px;">
+            Enter credentials once, then it will auto-redirect to Salesforce login
+        </p>
         
         <form id="deployForm">
             <div class="form-group">
@@ -162,8 +165,11 @@
             </div>
             
             <button type="submit" class="btn" id="deployBtn">
-                Login to Salesforce & Deploy
+                <span id="btnText">Login to Salesforce & Deploy</span>
             </button>
+            <div id="autoRedirectMsg" style="display: none; margin-top: 10px; font-size: 12px; color: #666;">
+                Credentials saved! Next time this page will auto-redirect to Salesforce login.
+            </div>
         </form>
         
         <div id="status" class="status"></div>
@@ -193,13 +199,15 @@
             
             // Auto-submit if all required fields are filled
             if (savedGithubToken && savedClientId && savedInstanceUrl) {
-                // Small delay to ensure form is ready
+                // Show that we're auto-redirecting
+                showStatus('info', '✅ Credentials found! Redirecting to Salesforce login...');
+                // Small delay to ensure form is ready and user sees the message
                 setTimeout(() => {
                     const form = document.getElementById('deployForm');
                     if (form.checkValidity()) {
                         form.dispatchEvent(new Event('submit'));
                     }
-                }, 100);
+                }, 500);
             }
         }
         
@@ -253,10 +261,14 @@
             sessionStorage.setItem('githubToken', githubToken);
             sessionStorage.setItem('instanceUrl', instanceUrl);
             
+            // Show that credentials are saved
+            document.getElementById('autoRedirectMsg').style.display = 'block';
+            
             // Show loading state
             const btn = document.getElementById('deployBtn');
+            const btnText = document.getElementById('btnText');
             btn.disabled = true;
-            btn.innerHTML = '<span class="loading"></span> Redirecting to Salesforce...';
+            btnText.innerHTML = '<span class="loading"></span> Redirecting to Salesforce...';
             
             // Redirect to Salesforce OAuth - this will transparently take user to login.salesforce.com
             const redirectUri = encodeURIComponent(window.location.origin + window.location.pathname);
