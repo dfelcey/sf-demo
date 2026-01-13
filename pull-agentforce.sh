@@ -9,6 +9,7 @@ VERBOSE=false
 ORG_ALIAS=""
 OUTPUT_DIR="force-app"
 METADATA_FILE="agentforce-metadata.txt"
+ADD_NEW_ORG=false
 
 # Colors for output
 RED='\033[0;31m'
@@ -45,14 +46,19 @@ This script retrieves:
   - Agent-related Custom Objects
 
 Options:
-  -a, --alias ALIAS          Org alias (required)
+  -a, --alias ALIAS          Org alias (required unless using --add-org)
   -o, --output-dir DIR        Output directory (default: force-app)
   -f, --metadata-file FILE    Custom metadata file (default: agentforce-metadata.txt)
+  --add-org                   Add/authenticate a new org (will prompt for alias if not provided)
+  --new-org                   Alias for --add-org
   --verbose                   Enable verbose output
   -h, --help                 Show this help message
 
 Examples:
-  # Pull Agentforce assets from an org
+  # Add a new org and pull Agentforce assets
+  $0 --add-org -a my-org
+
+  # Pull Agentforce assets from an existing org
   $0 -a my-org
 
   # Pull to custom directory
@@ -81,6 +87,10 @@ while [[ $# -gt 0 ]]; do
         -f|--metadata-file)
             METADATA_FILE="$2"
             shift 2
+            ;;
+        --add-org|--new-org)
+            ADD_NEW_ORG=true
+            shift
             ;;
         --verbose)
             VERBOSE=true
@@ -142,21 +152,37 @@ echo "  • Custom Metadata Types"
 echo "  • Agent-related Custom Objects"
 echo ""
 
-if [ -z "$ORG_ALIAS" ]; then
-    log_error "Org alias is required"
+# Build command
+CMD="./pull-assets.sh -f $METADATA_FILE -o $OUTPUT_DIR"
+
+# Add org alias if provided
+if [ -n "$ORG_ALIAS" ]; then
+    CMD="$CMD -a $ORG_ALIAS"
+fi
+
+# Add --add-org flag if specified
+if [ "$ADD_NEW_ORG" = true ]; then
+    CMD="$CMD --add-org"
+    if [ -n "$ORG_ALIAS" ]; then
+        CMD="$CMD -a $ORG_ALIAS"
+    fi
+fi
+
+# Add verbose flag if specified
+if [ "$VERBOSE" = true ]; then
+    CMD="$CMD --verbose"
+fi
+
+# Check if org alias is required
+if [ -z "$ORG_ALIAS" ] && [ "$ADD_NEW_ORG" != true ]; then
+    log_error "Org alias is required (use -a) or use --add-org to add a new org"
     echo ""
     echo "Usage: $0 -a ORG_ALIAS"
+    echo "   or: $0 --add-org [-a ORG_ALIAS]"
     echo ""
     echo "To see available orgs:"
     echo "  ./pull-assets.sh --list-orgs"
     exit 1
-fi
-
-# Build command
-CMD="./pull-assets.sh -a $ORG_ALIAS -f $METADATA_FILE -o $OUTPUT_DIR"
-
-if [ "$VERBOSE" = true ]; then
-    CMD="$CMD --verbose"
 fi
 
 log_info "Executing: $CMD"
