@@ -36,30 +36,6 @@ This is the simplest approach - no GitHub Actions needed!
    - It will automatically open in your browser
    - Monitor the deployment progress in real-time
 
-### Package Management & Additional Tasks
-
-**Install packages, run tests, manage scratch orgs:**
-
-```bash
-# Install a package
-./manage-packages.sh install -p 04t000000000000
-
-# List installed packages
-./manage-packages.sh list-installed
-
-# Run Apex tests
-./manage-packages.sh run-tests -t RunLocalTests
-
-# Create a scratch org
-./manage-packages.sh create-scratch -a my-scratch
-
-# Validate deployment (dry-run)
-./manage-packages.sh validate
-
-# See all options
-./manage-packages.sh --help
-```
-
 ## How It Works
 
 1. **Trigger Script** → Authenticates you via browser login locally
@@ -82,7 +58,7 @@ This is the simplest approach - no GitHub Actions needed!
 - `.github/workflows/` - GitHub Actions workflow for deployment
 - `deploy-local.sh` - Simple local deployment script (recommended)
 - `trigger-deploy.sh` - Script to trigger GitHub Actions deployment
-- `manage-packages.sh` - Package management and org tasks script
+- `agentforce-metadata.txt` - Metadata configuration for Agentforce assets
 - `config/` - Salesforce project configuration
 
 ## Configuration
