@@ -60,6 +60,30 @@ This is the simplest approach - no GitHub Actions needed!
 ./manage-packages.sh --help
 ```
 
+### Retrieve Assets from Salesforce Org
+
+**Pull specific metadata/assets from an org:**
+
+```bash
+# List available orgs
+./pull-assets.sh --list-orgs
+
+# Pull specific metadata types
+./pull-assets.sh -a my-org -t CustomObject,ApexClass
+
+# Pull using manifest file (package.xml)
+./pull-assets.sh -a my-org -m manifest/package.xml
+
+# Pull specific assets from file
+./pull-assets.sh -a my-org -f metadata-example.txt
+
+# Pull to custom directory
+./pull-assets.sh -a my-org -t CustomObject -o retrieved-metadata
+
+# See all options
+./pull-assets.sh --help
+```
+
 ## How It Works
 
 1. **Trigger Script** → Authenticates you via browser login locally
@@ -83,6 +107,8 @@ This is the simplest approach - no GitHub Actions needed!
 - `deploy-local.sh` - Simple local deployment script (recommended)
 - `trigger-deploy.sh` - Script to trigger GitHub Actions deployment
 - `manage-packages.sh` - Package management and org tasks script
+- `pull-assets.sh` - Retrieve metadata/assets from Salesforce orgs
+- `metadata-example.txt` - Example metadata file for pull-assets.sh
 - `config/` - Salesforce project configuration
 
 ## Configuration

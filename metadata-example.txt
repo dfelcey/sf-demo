@@ -1,0 +1,25 @@
+# Example metadata file for pull-assets.sh
+# Format: Metadata type on one line, followed by member names (one per line)
+# Lines starting with # are comments
+
+# Custom Objects
+CustomObject
+Account
+Contact
+CustomObject__c
+
+# Apex Classes
+ApexClass
+MyClass
+MyOtherClass
+
+# Custom Fields
+CustomField
+Account.MyField__c
+Contact.AnotherField__c
+
+# Flows
+Flow
+MyFlow
+AnotherFlow
+
