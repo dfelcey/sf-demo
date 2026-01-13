@@ -84,6 +84,33 @@ This is the simplest approach - no GitHub Actions needed!
 ./pull-assets.sh --help
 ```
 
+### Pull Agentforce Assets
+
+**Convenience script to pull Agentforce agent assets, external services, and named credentials:**
+
+```bash
+# Pull all Agentforce assets (agents, external services, named credentials)
+./pull-agentforce.sh -a my-org
+
+# Pull to custom directory
+./pull-agentforce.sh -a my-org -o agentforce-assets
+
+# Verbose mode for debugging
+./pull-agentforce.sh -a my-org --verbose
+
+# See all options
+./pull-agentforce.sh --help
+```
+
+This script retrieves:
+- **Einstein Agent Configurations** (Agentforce agents)
+- **External Service Registrations** (external services used by agents)
+- **Named Credentials** (authentication for external services)
+- **External Credentials** (newer credential type)
+- **Connected Apps** (often used with external services)
+- **Custom Metadata Types** (may contain agent configurations)
+- **Agent-related Custom Objects** (if any)
+
 ## How It Works
 
 1. **Trigger Script** → Authenticates you via browser login locally
@@ -108,7 +135,9 @@ This is the simplest approach - no GitHub Actions needed!
 - `trigger-deploy.sh` - Script to trigger GitHub Actions deployment
 - `manage-packages.sh` - Package management and org tasks script
 - `pull-assets.sh` - Retrieve metadata/assets from Salesforce orgs
+- `pull-agentforce.sh` - Convenience script for Agentforce assets
 - `metadata-example.txt` - Example metadata file for pull-assets.sh
+- `agentforce-metadata.txt` - Metadata file for Agentforce assets
 - `config/` - Salesforce project configuration
 
 ## Configuration

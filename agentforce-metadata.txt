@@ -1,0 +1,36 @@
+# Agentforce Agent Assets, External Services, and Named Credentials
+# This file contains metadata types for pulling Agentforce-related assets
+# Use with: ./pull-assets.sh -a ORG_ALIAS -f agentforce-metadata.txt
+
+# Einstein Agent Configurations (Agentforce agents)
+EinsteinAgentConfig
+*
+
+# External Service Registrations (external services used by agents)
+ExternalServiceRegistration
+*
+
+# Named Credentials (authentication for external services)
+NamedCredential
+*
+
+# External Credentials (newer credential type)
+ExternalCredential
+*
+
+# Connected Apps (often used with external services)
+ConnectedApp
+*
+
+# Custom Metadata Types (may contain agent configurations)
+CustomMetadata
+*
+
+# Custom Objects (agent-related custom objects if any)
+CustomObject
+Agent__c
+AgentConfig__c
+AgentSettings__c
+AgentSession__c
+AgentConversation__c
+
