@@ -25,18 +25,29 @@ ConnectedApp
 CustomMetadata
 *
 
-# Custom Objects (agent-related custom objects - update with your actual object names)
-CustomObject
-Agent__c
-AgentConfig__c
-AgentSettings__c
-AgentSession__c
-AgentConversation__c
-EinsteinAgent__c
-EinsteinAgentConfig__c
-
 # Live Chat Agent Config (if using Live Chat agents)
 LiveChatAgentConfig
+*
+
+# Apex Classes (including invocable actions)
+ApexClass
+CreateOpportunityInvocable
+*
+
+# Agentforce Actions (GenAI Functions - actions that can be added to agents)
+GenAiFunction
+*
+
+# Agentforce Topics (GenAI Plugins - categories of actions)
+GenAiPlugin
+*
+
+# Agentforce Planner (GenAI Planner Bundle - contains all topics and actions)
+GenAiPlannerBundle
+*
+
+# Flows (may contain flow actions used by agents)
+Flow
 *
 
 # Bot Configurations (if using Einstein Bots)
