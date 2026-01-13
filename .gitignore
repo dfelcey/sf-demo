@@ -46,3 +46,13 @@ $RECYCLE.BIN/
 **/__pycache__/
 **/.venv/
 **/venv/
+
+# Test results and coverage
+test-results/
+*.coverage
+coverage/
+
+# Temporary files
+*.tmp
+*.bak
+*~
