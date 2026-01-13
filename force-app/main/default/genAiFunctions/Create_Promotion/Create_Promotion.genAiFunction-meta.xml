@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<GenAiFunction xmlns="http://soap.sforce.com/2006/04/metadata">
+    <description>Creates a new promotion or offer for a storefront with specified details.</description>
+    <invocationTarget>AgentCreatePromotionActions</invocationTarget>
+    <invocationTargetType>apex</invocationTargetType>
+    <isConfirmationRequired>true</isConfirmationRequired>
+    <masterLabel>Create Promotion</masterLabel>
+</GenAiFunction>

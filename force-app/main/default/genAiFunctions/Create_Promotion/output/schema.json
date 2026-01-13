@@ -1,0 +1,24 @@
+{
+  "unevaluatedProperties" : false,
+  "properties" : {
+    "message" : {
+      "title" : "Message",
+      "description" : "User-readable status message.",
+      "lightning:type" : "lightning__textType",
+      "lightning:isPII" : false
+    },
+    "promotionId" : {
+      "title" : "Promotion Id",
+      "description" : "The Id of the created promotion",
+      "lightning:type" : "lightning__textType",
+      "lightning:isPII" : false
+    },
+    "success" : {
+      "title" : "Success",
+      "description" : "True if successful",
+      "lightning:type" : "lightning__booleanType",
+      "lightning:isPII" : false
+    }
+  },
+  "lightning:type" : "lightning__objectType"
+}

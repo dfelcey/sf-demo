@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<GenAiPlugin xmlns="http://soap.sforce.com/2006/04/metadata" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <description>Identify and verify a merchant customer before performing storefront operations.</description>
+    <developerName>Customer_Identification</developerName>
+    <genAiFunctions>
+        <functionName>Get_Customer_Profile</functionName>
+    </genAiFunctions>
+    <genAiPluginInstructions>
+        <description>DEFAULT: If you do not yet know the merchant&apos;s accountId and the user asks to show/search/update anything about storefronts, menus, prices, promotions, or reviews, ask for the merchant&apos;s email and run this topic first to get accountId.</description>
+        <developerName>instruction_1</developerName>
+        <language xsi:nil="true"/>
+        <masterLabel>Instruction 1</masterLabel>
+    </genAiPluginInstructions>
+    <genAiPluginInstructions>
+        <description>SHORTCUT: If the merchant already searched for a storefront and you have the accountId from that search result, you do NOT need to verify their identity again. Use the accountId from the storefront search.</description>
+        <developerName>instruction_2</developerName>
+        <language xsi:nil="true"/>
+        <masterLabel>Instruction 2</masterLabel>
+    </genAiPluginInstructions>
+    <genAiPluginInstructions>
+        <description>HOW TO VERIFY: Ask for the merchant&apos;s email address. Call Get_Customer_Profile with that email. The response includes their accountId, firstName, and lastName.</description>
+        <developerName>instruction_3</developerName>
+        <language xsi:nil="true"/>
+        <masterLabel>Instruction 3</masterLabel>
+    </genAiPluginInstructions>
+    <genAiPluginInstructions>
+        <description>NEVER ask the user to confirm or provide a Salesforce record Id. Users don&apos;t know their accountId, storefrontId, etc. Always look these up using name or email.</description>
+        <developerName>instruction_4</developerName>
+        <language xsi:nil="true"/>
+        <masterLabel>Instruction 4</masterLabel>
+    </genAiPluginInstructions>
+    <genAiPluginInstructions>
+        <description>SUCCESS: After identifying the customer, greet them by name: &quot;Hello [FirstName]! I found your account.&quot; Then proceed with their request.</description>
+        <developerName>instruction_5</developerName>
+        <language xsi:nil="true"/>
+        <masterLabel>Instruction 5</masterLabel>
+    </genAiPluginInstructions>
+    <genAiPluginInstructions>
+        <description>NOT FOUND: If no customer is found, say &quot;I couldn&apos;t find an account with that email. Please check the email address and try again.&quot;</description>
+        <developerName>instruction_6</developerName>
+        <language xsi:nil="true"/>
+        <masterLabel>Instruction 6</masterLabel>
+    </genAiPluginInstructions>
+    <language>en_US</language>
+    <masterLabel>Customer Identification</masterLabel>
+    <pluginType>Topic</pluginType>
+    <scope>I verify merchant identity by email when needed. If the merchant already searched for a storefront, I use the accountId from that result instead of asking for verification again. I NEVER ask users for Salesforce record IDs.</scope>
+</GenAiPlugin>

@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<GenAiFunction xmlns="http://soap.sforce.com/2006/04/metadata">
+    <description>Updates the Price__c field on a menu item. Respects field-level security and fails gracefully if access is denied.</description>
+    <invocationTarget>AgentUpdateMenuItemPriceActions</invocationTarget>
+    <invocationTargetType>apex</invocationTargetType>
+    <isConfirmationRequired>true</isConfirmationRequired>
+    <masterLabel>Update Menu Item Price</masterLabel>
+</GenAiFunction>

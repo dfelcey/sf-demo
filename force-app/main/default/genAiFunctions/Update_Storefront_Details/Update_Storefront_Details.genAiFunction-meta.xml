@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<GenAiFunction xmlns="http://soap.sforce.com/2006/04/metadata">
+    <description>Updates non-sensitive storefront fields such as description, phone, status, and overview.</description>
+    <invocationTarget>AgentUpdateStorefrontDetailsActions</invocationTarget>
+    <invocationTargetType>apex</invocationTargetType>
+    <isConfirmationRequired>true</isConfirmationRequired>
+    <masterLabel>Update Storefront Details</masterLabel>
+</GenAiFunction>

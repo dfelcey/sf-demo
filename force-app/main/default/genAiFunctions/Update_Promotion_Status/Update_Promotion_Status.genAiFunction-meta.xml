@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<GenAiFunction xmlns="http://soap.sforce.com/2006/04/metadata">
+    <description>Updates the status of an existing promotion (e.g., activate, pause, end).</description>
+    <invocationTarget>AgentUpdatePromotionStatusActions</invocationTarget>
+    <invocationTargetType>apex</invocationTargetType>
+    <isConfirmationRequired>true</isConfirmationRequired>
+    <masterLabel>Update Promotion Status</masterLabel>
+</GenAiFunction>

@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<GenAiPlugin xmlns="http://soap.sforce.com/2006/04/metadata" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <description>Create and manage promotions and special offers.</description>
+    <developerName>Promotions_Management</developerName>
+    <genAiFunctions>
+        <functionName>Create_Promotion</functionName>
+    </genAiFunctions>
+    <genAiFunctions>
+        <functionName>Update_Promotion_Status</functionName>
+    </genAiFunctions>
+    <genAiPluginInstructions>
+        <description>PREREQUISITE: You need the storefrontId and accountId from a storefront search before creating or managing promotions for that storefront.</description>
+        <developerName>instruction_1</developerName>
+        <language xsi:nil="true"/>
+        <masterLabel>Instruction 1</masterLabel>
+    </genAiPluginInstructions>
+    <genAiPluginInstructions>
+        <description>CREATE PROMOTION: Gather these details - description (required), discount percentage, start date, end date, and promo code. Summarize before creating: &quot;I&apos;ll create a promotion: [details]. Should I proceed?&quot;</description>
+        <developerName>instruction_2</developerName>
+        <language xsi:nil="true"/>
+        <masterLabel>Instruction 2</masterLabel>
+    </genAiPluginInstructions>
+    <genAiPluginInstructions>
+        <description>DEFAULT STATUS: New promotions are created with &quot;Draft&quot; status. After creating, ask: &quot;The promotion is saved as a draft. Would you like me to activate it now?&quot;</description>
+        <developerName>instruction_3</developerName>
+        <language xsi:nil="true"/>
+        <masterLabel>Instruction 3</masterLabel>
+    </genAiPluginInstructions>
+    <genAiPluginInstructions>
+        <description>STATUS VALUES: Valid statuses are &quot;Draft&quot;, &quot;Active&quot;, &quot;Paused&quot;, and &quot;Ended&quot;. Map user language: &quot;activate&quot; → Active, &quot;pause/stop&quot; → Paused, &quot;end/cancel/delete&quot; → Ended.</description>
+        <developerName>instruction_4</developerName>
+        <language xsi:nil="true"/>
+        <masterLabel>Instruction 4</masterLabel>
+    </genAiPluginInstructions>
+    <genAiPluginInstructions>
+        <description>DATE FORMAT: Accept dates in common formats (January 15, 2025 or 01/15/2025 or 2025-01-15). Convert to YYYY-MM-DD format for the action.</description>
+        <developerName>instruction_5</developerName>
+        <language xsi:nil="true"/>
+        <masterLabel>Instruction 5</masterLabel>
+    </genAiPluginInstructions>
+    <genAiPluginInstructions>
+        <description>PROMO CODES: Suggest uppercase codes without spaces (e.g., SUMMER20, VALENTINES15). If user provides lowercase, convert to uppercase.</description>
+        <developerName>instruction_6</developerName>
+        <language xsi:nil="true"/>
+        <masterLabel>Instruction 6</masterLabel>
+    </genAiPluginInstructions>
+    <genAiPluginInstructions>
+        <description>IDENTITY FIRST: If you do not already have the merchant&apos;s accountId, ask for their email and call Get_Customer_Profile to get accountId before creating/updating promotions. Use that accountId for all actions. Do NOT ask the user for Salesforce IDs.</description>
+        <developerName>instruction_identity</developerName>
+        <language xsi:nil="true"/>
+        <masterLabel>Identity First</masterLabel>
+    </genAiPluginInstructions>
+    <language>en_US</language>
+    <masterLabel>Promotions Management</masterLabel>
+    <pluginType>Topic</pluginType>
+    <scope>I create and manage promotions with discounts, date ranges, and promo codes. New promotions start as drafts. I can activate, pause, or end promotions.</scope>
+</GenAiPlugin>

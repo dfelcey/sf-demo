@@ -1,0 +1,28 @@
+{
+  "required" : [ "accountId", "menuItemId", "price" ],
+  "unevaluatedProperties" : false,
+  "properties" : {
+    "accountId" : {
+      "title" : "Account Id",
+      "description" : "The Account Id that owns the storefront. Required for security validation.",
+      "lightning:type" : "lightning__textType",
+      "lightning:isPII" : false,
+      "copilotAction:isUserInput" : false
+    },
+    "menuItemId" : {
+      "title" : "Menu Item Id",
+      "description" : "The Menu_Item__c record Id to update.",
+      "lightning:type" : "lightning__textType",
+      "lightning:isPII" : false,
+      "copilotAction:isUserInput" : false
+    },
+    "price" : {
+      "title" : "Price",
+      "description" : "New price for the menu item as a decimal number (e.g., 14.99).",
+      "lightning:type" : "lightning__numberType",
+      "lightning:isPII" : false,
+      "copilotAction:isUserInput" : false
+    }
+  },
+  "lightning:type" : "lightning__objectType"
+}

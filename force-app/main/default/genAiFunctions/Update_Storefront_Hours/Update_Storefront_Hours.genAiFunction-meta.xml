@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<GenAiFunction xmlns="http://soap.sforce.com/2006/04/metadata">
+    <description>Updates or creates operating hours for a storefront on a specific day of the week.</description>
+    <invocationTarget>AgentUpdateStorefrontHoursActions</invocationTarget>
+    <invocationTargetType>apex</invocationTargetType>
+    <isConfirmationRequired>true</isConfirmationRequired>
+    <masterLabel>Update Storefront Hours</masterLabel>
+</GenAiFunction>

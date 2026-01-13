@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<GenAiFunction xmlns="http://soap.sforce.com/2006/04/metadata">
+    <description>Updates descriptive menu item fields such as description, availability, calories, and image URL. Does NOT update price.</description>
+    <invocationTarget>AgentUpdateMenuItemActions</invocationTarget>
+    <invocationTargetType>apex</invocationTargetType>
+    <isConfirmationRequired>true</isConfirmationRequired>
+    <masterLabel>Update Menu Item</masterLabel>
+</GenAiFunction>
