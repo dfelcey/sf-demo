@@ -1,10 +1,9 @@
 # Agentforce Agent Assets, External Services, and Named Credentials
 # This file contains metadata types for pulling Agentforce-related assets
 # Use with: ./pull-assets.sh -a ORG_ALIAS -f agentforce-metadata.txt
-
-# Einstein Agent Configurations (Agentforce agents)
-EinsteinAgentConfig
-*
+#
+# Note: EinsteinAgentConfig is not available via Metadata API
+# Agent configurations may be stored in Custom Objects or Custom Metadata
 
 # External Service Registrations (external services used by agents)
 ExternalServiceRegistration
@@ -26,11 +25,25 @@ ConnectedApp
 CustomMetadata
 *
 
-# Custom Objects (agent-related custom objects if any)
+# Custom Objects (agent-related custom objects - update with your actual object names)
 CustomObject
 Agent__c
 AgentConfig__c
 AgentSettings__c
 AgentSession__c
 AgentConversation__c
+EinsteinAgent__c
+EinsteinAgentConfig__c
+
+# Live Chat Agent Config (if using Live Chat agents)
+LiveChatAgentConfig
+*
+
+# Bot Configurations (if using Einstein Bots)
+Bot
+*
+
+# Bot Versions (if using Einstein Bots)
+BotVersion
+*
 
