@@ -60,57 +60,6 @@ This is the simplest approach - no GitHub Actions needed!
 ./manage-packages.sh --help
 ```
 
-### Retrieve Assets from Salesforce Org
-
-**Pull specific metadata/assets from an org:**
-
-```bash
-# List available orgs
-./pull-assets.sh --list-orgs
-
-# Pull specific metadata types
-./pull-assets.sh -a my-org -t CustomObject,ApexClass
-
-# Pull using manifest file (package.xml)
-./pull-assets.sh -a my-org -m manifest/package.xml
-
-# Pull specific assets from file
-./pull-assets.sh -a my-org -f metadata-example.txt
-
-# Pull to custom directory
-./pull-assets.sh -a my-org -t CustomObject -o retrieved-metadata
-
-# See all options
-./pull-assets.sh --help
-```
-
-### Pull Agentforce Assets
-
-**Convenience script to pull Agentforce agent assets, external services, and named credentials:**
-
-```bash
-# Pull all Agentforce assets (agents, external services, named credentials)
-./pull-agentforce.sh -a my-org
-
-# Pull to custom directory
-./pull-agentforce.sh -a my-org -o agentforce-assets
-
-# Verbose mode for debugging
-./pull-agentforce.sh -a my-org --verbose
-
-# See all options
-./pull-agentforce.sh --help
-```
-
-This script retrieves:
-- **Einstein Agent Configurations** (Agentforce agents)
-- **External Service Registrations** (external services used by agents)
-- **Named Credentials** (authentication for external services)
-- **External Credentials** (newer credential type)
-- **Connected Apps** (often used with external services)
-- **Custom Metadata Types** (may contain agent configurations)
-- **Agent-related Custom Objects** (if any)
-
 ## How It Works
 
 1. **Trigger Script** → Authenticates you via browser login locally
@@ -134,10 +83,6 @@ This script retrieves:
 - `deploy-local.sh` - Simple local deployment script (recommended)
 - `trigger-deploy.sh` - Script to trigger GitHub Actions deployment
 - `manage-packages.sh` - Package management and org tasks script
-- `pull-assets.sh` - Retrieve metadata/assets from Salesforce orgs
-- `pull-agentforce.sh` - Convenience script for Agentforce assets
-- `metadata-example.txt` - Example metadata file for pull-assets.sh
-- `agentforce-metadata.txt` - Metadata file for Agentforce assets
 - `config/` - Salesforce project configuration
 
 ## Configuration
