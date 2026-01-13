@@ -1,9 +1,16 @@
 # Agentforce Agent Assets, External Services, and Named Credentials
-# This file contains metadata types for pulling Agentforce-related assets
-# Use with: ./pull-assets.sh -a ORG_ALIAS -f agentforce-metadata.txt
+# This file contains metadata types for Agentforce-related assets
+# Reference file for understanding what Agentforce metadata types are included in this project
 #
 # Note: EinsteinAgentConfig is not available via Metadata API
 # Agent configurations may be stored in Custom Objects or Custom Metadata
+#
+# This project includes the following Agentforce assets:
+# - GenAI Functions (actions that can be added to agents)
+# - GenAI Plugins (topics/categories of actions)
+# - GenAI Planner Bundles (agent planner configurations)
+# - Flows (including flow actions)
+# - External Services and Credentials
 
 # External Service Registrations (external services used by agents)
 ExternalServiceRegistration

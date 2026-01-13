@@ -1,6 +1,6 @@
 # Salesforce DX Project: sf-demo
 
-A Salesforce project with automated deployment via GitHub Actions using browser-based authentication (no Connected App required).
+A Salesforce project with Agentforce assets and automated deployment capabilities. Supports both local deployment and GitHub Actions-based deployment using browser-based authentication (no Connected App required).
 
 ## Quick Start
 
@@ -13,6 +13,25 @@ A Salesforce project with automated deployment via GitHub Actions using browser-
 ```
 
 This is the simplest approach - no GitHub Actions needed!
+
+**Features:**
+- Automatic Salesforce CLI detection
+- Browser-based authentication
+- Optional package installation before deployment
+- Support for package files (`.packages`)
+
+**Install packages before deploying:**
+
+```bash
+# Install packages from command line
+./deploy-local.sh -p 04t000000000000,04t000000000001
+
+# Install packages from file
+./deploy-local.sh --packages-file .packages
+
+# Verbose mode for debugging
+./deploy-local.sh -v
+```
 
 ### Option 2: Deploy via GitHub Actions
 
@@ -38,6 +57,15 @@ This is the simplest approach - no GitHub Actions needed!
 
 ## How It Works
 
+### Local Deployment (`deploy-local.sh`)
+
+1. **Check CLI** → Verifies Salesforce CLI is installed
+2. **Authenticate** → Opens browser for Salesforce login (if needed)
+3. **Install Packages** → Optionally installs packages from `.packages` file or command line
+4. **Deploy** → Deploys metadata from `force-app/` directory
+
+### GitHub Actions Deployment (`trigger-deploy.sh`)
+
 1. **Trigger Script** → Authenticates you via browser login locally
 2. **Extract Credentials** → Gets access token from authenticated session
 3. **Trigger Workflow** → Sends credentials to GitHub Actions workflow
@@ -50,16 +78,36 @@ This is the simplest approach - no GitHub Actions needed!
 - ✅ **No Connected App Required** - Uses standard browser login session tokens
 - ✅ **Automatic CLI Installation** - Detects and installs dependencies in GitHub Actions
 - ✅ **Simple Authentication** - Browser login, no manual token management
+- ✅ **Package Installation** - Install packages before deployment (local deployment only)
 - ✅ **Real-time Monitoring** - Script shows deployment progress and opens workflow links
+- ✅ **Agentforce Support** - Includes Agentforce assets (GenAI Functions, Plugins, Flows)
 
 ## Project Structure
 
-- `force-app/` - Salesforce metadata (custom objects, classes, etc.)
-- `.github/workflows/` - GitHub Actions workflow for deployment
-- `deploy-local.sh` - Simple local deployment script (recommended)
-- `trigger-deploy.sh` - Script to trigger GitHub Actions deployment
-- `agentforce-metadata.txt` - Metadata configuration for Agentforce assets
-- `config/` - Salesforce project configuration
+```
+sf-demo/
+├── force-app/main/default/          # Salesforce metadata
+│   ├── genAiFunctions/              # Agentforce GenAI Functions (actions)
+│   ├── genAiPlugins/                # Agentforce GenAI Plugins (topics)
+│   ├── flows/                       # Flows (including flow actions)
+│   ├── externalServiceRegistrations/ # External service registrations
+│   ├── externalCredentials/        # External credentials
+│   ├── namedCredentials/            # Named credentials
+│   └── ...                          # Other metadata types
+├── .github/workflows/                # GitHub Actions workflow
+├── config/                           # Salesforce project configuration
+├── deploy-local.sh                   # Local deployment script (recommended)
+├── trigger-deploy.sh                 # GitHub Actions trigger script
+├── agentforce-metadata.txt           # Agentforce metadata reference
+└── .packages                         # Package IDs for installation (optional)
+```
+
+### Key Files
+
+- **`deploy-local.sh`** - Simple local deployment with package installation support
+- **`trigger-deploy.sh`** - Triggers GitHub Actions deployment workflow
+- **`agentforce-metadata.txt`** - Reference file for Agentforce metadata types
+- **`.packages`** - Optional file listing package IDs to install before deployment
 
 ## Configuration
 
@@ -78,7 +126,26 @@ Default: `https://login.salesforce.com` (Production)
 
 For sandboxes, use:
 ```bash
+# Local deployment
+./deploy-local.sh https://test.salesforce.com
+
+# GitHub Actions deployment
 ./trigger-deploy.sh https://test.salesforce.com
+```
+
+### Package Installation
+
+Create a `.packages` file (one package ID per line) to automatically install packages before deployment:
+
+```
+# Example .packages file
+04t000000000000AAA
+04t000000000000BBB
+```
+
+Or use the `-p` flag to specify packages directly:
+```bash
+./deploy-local.sh -p 04t000000000000AAA,04t000000000000BBB
 ```
 
 ## Troubleshooting
@@ -93,11 +160,20 @@ For sandboxes, use:
 - Verify the org alias exists (`sf org list`)
 - Check that credentials were extracted successfully (run with `-v` flag)
 - Access tokens expire after ~2 hours - re-run the script if needed
+- For local deployment, ensure Salesforce CLI is installed (`npm install -g @salesforce/cli`)
+
+### Package installation fails
+- Verify package IDs are correct (format: `04t...` for managed packages)
+- Check that packages are available in your org
+- Ensure you have permission to install packages
+- Review package installation logs for specific errors
 
 ### Deployment fails
-- Check GitHub Actions logs for errors
+- Check GitHub Actions logs for errors (if using GitHub Actions)
 - Verify your Salesforce org has deployment permissions
 - Ensure metadata is valid
+- Check for missing dependencies or required packages
+- Review deployment logs for specific component errors
 
 ## Salesforce DX Resources
 
