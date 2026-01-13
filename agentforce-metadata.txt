@@ -30,8 +30,8 @@ LiveChatAgentConfig
 *
 
 # Apex Classes (including invocable actions)
+# Use * to get all classes, or list specific class names
 ApexClass
-CreateOpportunityInvocable
 *
 
 # Agentforce Actions (GenAI Functions - actions that can be added to agents)
