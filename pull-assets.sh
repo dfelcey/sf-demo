@@ -13,6 +13,7 @@ METADATA_FILE=""    # File containing metadata to retrieve
 OUTPUT_DIR="force-app"  # Default output directory
 MANIFEST_FILE=""    # Use manifest file
 WAIT_TIME=10
+ADD_NEW_ORG=false   # Flag to add a new org
 
 # Colors for output
 RED='\033[0;31m'
@@ -58,6 +59,9 @@ Options:
   -m, --manifest FILE        Use manifest file (package.xml)
   -o, --output-dir DIR       Output directory (default: force-app)
   -w, --wait MINUTES         Wait time in minutes (default: 10)
+  --add-org                  Add/authenticate a new org (will prompt for alias if not provided)
+  --new-org                  Alias for --add-org
+  --list-orgs                List all authenticated orgs and exit
   --verbose                  Enable verbose output
   -h, --help                 Show this help message
 
@@ -194,24 +198,87 @@ verify_org() {
     log_debug "Instance URL: $ORG_URL"
 }
 
+# Add/authenticate a new org
+add_new_org() {
+    if [ -z "$ORG_ALIAS" ]; then
+        echo ""
+        read -p "Enter a name for this org (alias): " ORG_ALIAS
+        if [ -z "$ORG_ALIAS" ]; then
+            log_error "Org alias is required"
+            exit 1
+        fi
+    fi
+    
+    # Check if org alias already exists
+    ORG_LIST=$(sf org list --json 2>/dev/null)
+    EXISTING_ORG=$(echo "$ORG_LIST" | grep -o "\"alias\":\"${ORG_ALIAS}\"" || echo "")
+    
+    if [ -n "$EXISTING_ORG" ]; then
+        log_warn "Org alias '$ORG_ALIAS' already exists"
+        echo ""
+        read -p "Do you want to re-authenticate this org? (y/N): " -n 1 -r
+        echo ""
+        if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+            log_info "Using existing org: $ORG_ALIAS"
+            return 0
+        fi
+    fi
+    
+    log_info "Adding new org: $ORG_ALIAS"
+    echo ""
+    echo "Instance URL: $INSTANCE_URL"
+    echo ""
+    echo "This will open your browser to log in to Salesforce."
+    echo ""
+    read -p "Press Enter to continue with Salesforce login..."
+    
+    sf org login web --alias "$ORG_ALIAS" --instance-url "$INSTANCE_URL" || {
+        log_error "Salesforce login failed"
+        exit 1
+    }
+    
+    log_success "Successfully authenticated new org: $ORG_ALIAS"
+    
+    # Show org info
+    ORG_INFO=$(sf org display --target-org "$ORG_ALIAS" --json 2>/dev/null)
+    ORG_USERNAME=$(echo "$ORG_INFO" | jq -r '.result.username // "unknown"' 2>/dev/null || echo "unknown")
+    ORG_URL=$(echo "$ORG_INFO" | jq -r '.result.instanceUrl // ""' 2>/dev/null || echo "")
+    
+    echo ""
+    echo "Org Details:"
+    echo "  Alias: $ORG_ALIAS"
+    echo "  Username: $ORG_USERNAME"
+    echo "  Instance URL: $ORG_URL"
+    echo ""
+}
+
 # Authenticate to org if needed
 authenticate_org() {
     ORG_LIST=$(sf org list --json 2>/dev/null)
     EXISTING_ORG=$(echo "$ORG_LIST" | grep -o "\"alias\":\"${ORG_ALIAS}\"" || echo "")
     
     if [ -z "$EXISTING_ORG" ]; then
-        log_info "Org '$ORG_ALIAS' not found. Authenticating..."
+        log_info "Org '$ORG_ALIAS' not found."
         echo ""
-        echo "This will open your browser to log in to Salesforce."
+        read -p "Do you want to authenticate this org now? (Y/n): " -n 1 -r
         echo ""
-        read -p "Press Enter to continue with Salesforce login..."
-        
-        sf org login web --alias "$ORG_ALIAS" --instance-url "$INSTANCE_URL" || {
-            log_error "Salesforce login failed"
+        if [[ ! $REPLY =~ ^[Nn]$ ]]; then
+            log_info "Authenticating org..."
+            echo ""
+            echo "This will open your browser to log in to Salesforce."
+            echo ""
+            read -p "Press Enter to continue with Salesforce login..."
+            
+            sf org login web --alias "$ORG_ALIAS" --instance-url "$INSTANCE_URL" || {
+                log_error "Salesforce login failed"
+                exit 1
+            }
+            
+            log_success "Successfully authenticated to Salesforce!"
+        else
+            log_error "Org authentication cancelled"
             exit 1
-        }
-        
-        log_success "Successfully authenticated to Salesforce!"
+        fi
     else
         log_info "Using existing authenticated org: $ORG_ALIAS"
     fi
@@ -413,6 +480,10 @@ while [[ $# -gt 0 ]]; do
             VERBOSE=true
             shift
             ;;
+        --add-org|--new-org)
+            ADD_NEW_ORG=true
+            shift
+            ;;
         --list-orgs)
             list_orgs
             exit 0
@@ -458,21 +529,50 @@ echo ""
 
 check_cli
 
+# Handle adding a new org
+if [ "$ADD_NEW_ORG" = true ]; then
+    add_new_org
+    # After adding, continue with retrieval if metadata specified
+    if [ -z "$METADATA_TYPES" ] && [ -z "$METADATA_FILE" ] && [ -z "$MANIFEST_FILE" ]; then
+        log_info "Org added successfully. No metadata specified for retrieval."
+        echo ""
+        echo "To retrieve metadata, run:"
+        echo "  $0 -a $ORG_ALIAS -t CustomObject,ApexClass"
+        echo "  $0 -a $ORG_ALIAS -f metadata-example.txt"
+        echo "  $0 -a $ORG_ALIAS -m manifest/package.xml"
+        exit 0
+    fi
+fi
+
 # If no org specified, list available orgs
 if [ -z "$ORG_ALIAS" ]; then
     log_warn "No org alias specified"
     echo ""
     list_orgs
     echo ""
-    read -p "Enter org alias to use: " ORG_ALIAS
+    echo "Options:"
+    echo "  1. Enter an existing org alias to use"
+    echo "  2. Use --add-org to add a new org"
+    echo ""
+    read -p "Enter org alias to use (or press Enter to add new): " ORG_ALIAS
     if [ -z "$ORG_ALIAS" ]; then
-        log_error "Org alias is required"
-        exit 1
+        echo ""
+        read -p "Do you want to add a new org? (Y/n): " -n 1 -r
+        echo ""
+        if [[ ! $REPLY =~ ^[Nn]$ ]]; then
+            ADD_NEW_ORG=true
+            add_new_org
+        else
+            log_error "Org alias is required"
+            exit 1
+        fi
     fi
 fi
 
-# Authenticate if needed
-authenticate_org
+# Authenticate if needed (unless we just added a new org)
+if [ "$ADD_NEW_ORG" != true ]; then
+    authenticate_org
+fi
 
 # Verify org
 verify_org
