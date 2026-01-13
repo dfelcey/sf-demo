@@ -78,7 +78,13 @@ Metadata Types Examples:
   CustomApplication         Custom Applications
 
 Examples:
-  # Pull specific metadata types
+  # Add a new org
+  $0 --add-org -a my-org
+
+  # Add a new org and pull metadata
+  $0 --add-org -a my-org -t CustomObject,ApexClass
+
+  # Pull specific metadata types from existing org
   $0 -a my-org -t CustomObject,ApexClass
 
   # Pull using manifest file
