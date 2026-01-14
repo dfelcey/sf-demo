@@ -105,6 +105,15 @@ EOF
 
 # Check if Salesforce CLI is installed
 check_cli() {
+    # Source the CLI check script if available
+    if [ -f "$(dirname "$0")/scripts/check-and-install-cli.sh" ]; then
+        source "$(dirname "$0")/scripts/check-and-install-cli.sh"
+        if ensure_cli_ready false false; then
+            return 0
+        fi
+    fi
+    
+    # Fallback to basic check
     if ! command -v sf &> /dev/null; then
         log_error "Salesforce CLI (sf) is not installed!"
         echo ""
@@ -112,18 +121,46 @@ check_cli() {
         echo "  npm install -g @salesforce/cli@latest"
         echo ""
         echo "Or visit: https://developer.salesforce.com/tools/salesforcecli"
-        exit 1
+        echo ""
+        read -p "Do you want to install it now? (Y/n): " -n 1 -r
+        echo ""
+        if [[ ! $REPLY =~ ^[Nn]$ ]]; then
+            if command -v npm &> /dev/null; then
+                npm install -g @salesforce/cli@latest || {
+                    log_error "Installation failed. Please install manually."
+                    exit 1
+                }
+                log_success "Salesforce CLI installed: $(sf --version 2>&1)"
+            else
+                log_error "npm not found. Please install Node.js first: https://nodejs.org/"
+                exit 1
+            fi
+        else
+            exit 1
+        fi
     fi
     
     SF_VERSION=$(sf --version 2>&1)
     log_debug "Salesforce CLI found: $SF_VERSION"
     
-    # Suggest updating if CLI is very old (optional check)
+    # Check for updates
     if [ "$VERBOSE" = true ]; then
         echo ""
-        echo "💡 Tip: Ensure you're using the latest CLI for best compatibility with API v64+"
-        echo "   Update with: npm install -g @salesforce/cli@latest"
-        echo "   Or use: sf update"
+        log_info "Checking for CLI updates..."
+        LATEST=$(npm view @salesforce/cli version 2>/dev/null || echo "")
+        if [ -n "$LATEST" ]; then
+            CURRENT=$(echo "$SF_VERSION" | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1)
+            if [ "$CURRENT" != "$LATEST" ]; then
+                log_warn "CLI update available: $CURRENT -> $LATEST"
+                read -p "Do you want to update now? (y/N): " -n 1 -r
+                echo ""
+                if [[ $REPLY =~ ^[Yy]$ ]]; then
+                    npm install -g @salesforce/cli@latest && log_success "CLI updated: $(sf --version 2>&1)"
+                fi
+            else
+                log_success "CLI is up to date: $CURRENT"
+            fi
+        fi
     fi
 }
 

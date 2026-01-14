@@ -272,7 +272,15 @@ Or use the `-p` flag to specify packages directly:
 - Verify the org alias exists (`sf org list`)
 - Check that credentials were extracted successfully (run with `-v` flag)
 - Access tokens expire after ~2 hours - re-run the script if needed
-- For local deployment, ensure Salesforce CLI is installed (`npm install -g @salesforce/cli`)
+
+### CLI Installation
+- **Automatic Installation**: All scripts now prompt to install Node.js and Salesforce CLI if missing
+- **macOS**: Uses Homebrew if available (`brew install node`)
+- **Linux**: Installs Node.js 20.x via NodeSource repository
+- **Manual Installation**: If automatic installation fails, install manually:
+  - Node.js: https://nodejs.org/
+  - Salesforce CLI: `npm install -g @salesforce/cli@latest`
+- **Update CLI**: Scripts check for updates when run with `-v` (verbose) flag
 
 ### Package installation fails
 - Verify package IDs are correct (format: `04t...` for managed packages)

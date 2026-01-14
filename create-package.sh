@@ -65,9 +65,44 @@ check_cli() {
     if ! command -v sf &> /dev/null; then
         log_error "Salesforce CLI (sf) is not installed!"
         echo ""
-        echo "Please install it:"
-        echo "  npm install -g @salesforce/cli"
-        exit 1
+        
+        # Check for Node.js/npm
+        if ! command -v npm &> /dev/null; then
+            log_error "npm is also not installed!"
+            echo ""
+            read -p "Install Node.js and Salesforce CLI now? (Y/n): " -n 1 -r
+            echo ""
+            if [[ ! $REPLY =~ ^[Nn]$ ]]; then
+                if [[ "$OSTYPE" == "darwin"* ]] && command -v brew &> /dev/null; then
+                    brew install node || exit 1
+                elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
+                    curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+                    sudo apt-get install -y nodejs || exit 1
+                else
+                    log_error "Please install Node.js manually: https://nodejs.org/"
+                    exit 1
+                fi
+            else
+                exit 1
+            fi
+        fi
+        
+        echo ""
+        read -p "Install Salesforce CLI now? (Y/n): " -n 1 -r
+        echo ""
+        if [[ ! $REPLY =~ ^[Nn]$ ]]; then
+            npm install -g @salesforce/cli@latest || {
+                log_error "Installation failed. Try: sudo npm install -g @salesforce/cli@latest"
+                exit 1
+            }
+            export PATH="$PATH:$(npm config get prefix)/bin"
+            log_success "Salesforce CLI installed: $(sf --version 2>&1)"
+        else
+            exit 1
+        fi
+    else
+        SF_VERSION=$(sf --version 2>&1)
+        log_info "Salesforce CLI found: $SF_VERSION"
     fi
 }
 

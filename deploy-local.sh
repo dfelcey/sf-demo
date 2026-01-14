@@ -112,14 +112,82 @@ echo ""
 if ! command -v sf &> /dev/null; then
     echo "❌ Salesforce CLI (sf) is not installed!"
     echo ""
-    echo "Please install it:"
-    echo "  npm install -g @salesforce/cli"
-    echo ""
-    echo "Or visit: https://developer.salesforce.com/tools/salesforcecli"
-    exit 1
+    
+    # Check for Node.js/npm
+    if ! command -v npm &> /dev/null; then
+        echo "❌ npm is also not installed!"
+        echo ""
+        echo "Node.js and npm are required prerequisites."
+        echo ""
+        read -p "Do you want to install Node.js and Salesforce CLI now? (Y/n): " -n 1 -r
+        echo ""
+        if [[ ! $REPLY =~ ^[Nn]$ ]]; then
+            # Try to install Node.js
+            if [[ "$OSTYPE" == "darwin"* ]]; then
+                if command -v brew &> /dev/null; then
+                    echo "Installing Node.js via Homebrew..."
+                    brew install node || {
+                        echo "❌ Failed to install Node.js. Please install manually: https://nodejs.org/"
+                        exit 1
+                    }
+                else
+                    echo "❌ Homebrew not found. Please install Node.js manually: https://nodejs.org/"
+                    exit 1
+                fi
+            elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
+                echo "Installing Node.js..."
+                curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+                sudo apt-get install -y nodejs || {
+                    echo "❌ Failed to install Node.js. Please install manually: https://nodejs.org/"
+                    exit 1
+                }
+            else
+                echo "❌ Unsupported OS. Please install Node.js manually: https://nodejs.org/"
+                exit 1
+            fi
+        else
+            exit 1
+        fi
+    fi
+    
+    echo "Installing Salesforce CLI..."
+    npm install -g @salesforce/cli@latest || {
+        echo "❌ Failed to install Salesforce CLI"
+        echo "Try: sudo npm install -g @salesforce/cli@latest"
+        exit 1
+    }
+    
+    # Refresh PATH
+    export PATH="$PATH:$(npm config get prefix)/bin"
+    
+    if ! command -v sf &> /dev/null; then
+        echo "❌ CLI installed but not in PATH. Try: export PATH=\"\$PATH:$(npm config get prefix)/bin\""
+        exit 1
+    fi
 fi
 
-echo "✅ Salesforce CLI found: $(sf --version)"
+SF_VERSION=$(sf --version 2>&1)
+echo "✅ Salesforce CLI found: $SF_VERSION"
+
+# Check for updates if verbose
+if [ "$VERBOSE" = true ]; then
+    echo ""
+    echo "Checking for CLI updates..."
+    LATEST=$(npm view @salesforce/cli version 2>/dev/null || echo "")
+    if [ -n "$LATEST" ]; then
+        CURRENT=$(echo "$SF_VERSION" | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1)
+        if [ "$CURRENT" != "$LATEST" ]; then
+            echo "⚠️  Update available: $CURRENT -> $LATEST"
+            read -p "Update now? (y/N): " -n 1 -r
+            echo ""
+            if [[ $REPLY =~ ^[Yy]$ ]]; then
+                npm install -g @salesforce/cli@latest && echo "✅ Updated to: $(sf --version 2>&1)"
+            fi
+        else
+            echo "✅ CLI is up to date: $CURRENT"
+        fi
+    fi
+fi
 echo ""
 
 # Check if already authenticated
