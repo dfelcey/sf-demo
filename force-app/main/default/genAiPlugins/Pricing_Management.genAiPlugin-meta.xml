@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <GenAiPlugin xmlns="http://soap.sforce.com/2006/04/metadata" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <canEscalate>false</canEscalate>
     <description>Update menu item prices with proper confirmation.</description>
     <developerName>Pricing_Management</developerName>
     <genAiFunctions>
@@ -13,44 +14,52 @@
         <developerName>instruction_1</developerName>
         <language xsi:nil="true"/>
         <masterLabel>Instruction 1</masterLabel>
+        <sortOrder>0</sortOrder>
     </genAiPluginInstructions>
     <genAiPluginInstructions>
         <description>SHOW CURRENT PRICE: Before changing a price, always show the current price first. Say &quot;The current price for [item] is $[price]. You want to change it to $[new price]. Is that correct?&quot;</description>
         <developerName>instruction_2</developerName>
         <language xsi:nil="true"/>
         <masterLabel>Instruction 2</masterLabel>
+        <sortOrder>0</sortOrder>
     </genAiPluginInstructions>
     <genAiPluginInstructions>
         <description>CONFIRMATION REQUIRED: Price changes are sensitive. Always get explicit confirmation before updating. Wait for &quot;yes&quot; or clear approval.</description>
         <developerName>instruction_3</developerName>
         <language xsi:nil="true"/>
         <masterLabel>Instruction 3</masterLabel>
+        <sortOrder>0</sortOrder>
     </genAiPluginInstructions>
     <genAiPluginInstructions>
         <description>SUCCESS MESSAGE: After updating, confirm: &quot;Done! I&apos;ve updated [item] from $[old price] to $[new price].&quot;</description>
         <developerName>instruction_4</developerName>
         <language xsi:nil="true"/>
         <masterLabel>Instruction 4</masterLabel>
+        <sortOrder>0</sortOrder>
     </genAiPluginInstructions>
     <genAiPluginInstructions>
         <description>PERMISSION ERROR: If you get a permission error, say &quot;You don&apos;t have permission to change prices. Please contact your administrator to request pricing access.&quot;</description>
         <developerName>instruction_5</developerName>
         <language xsi:nil="true"/>
         <masterLabel>Instruction 5</masterLabel>
+        <sortOrder>0</sortOrder>
     </genAiPluginInstructions>
     <genAiPluginInstructions>
         <description>PRICE FORMAT: Accept prices in common formats ($14.99, 14.99, $15). Convert to decimal before calling the action.</description>
         <developerName>instruction_6</developerName>
         <language xsi:nil="true"/>
         <masterLabel>Instruction 6</masterLabel>
+        <sortOrder>0</sortOrder>
     </genAiPluginInstructions>
     <genAiPluginInstructions>
         <description>IDENTITY FIRST: If you do not already have the merchant&apos;s accountId, ask for their email and call Get_Customer_Profile to get accountId before doing any pricing work. Use that accountId for all actions. Do NOT ask the user for Salesforce IDs.</description>
         <developerName>instruction_identity</developerName>
         <language xsi:nil="true"/>
         <masterLabel>Identity First</masterLabel>
+        <sortOrder>0</sortOrder>
     </genAiPluginInstructions>
     <language>en_US</language>
+    <localDeveloperName>Pricing_Management</localDeveloperName>
     <masterLabel>Pricing Management</masterLabel>
     <pluginType>Topic</pluginType>
     <scope>I update menu item prices. I always show the current price first and require explicit confirmation before making changes. I handle permission errors gracefully.</scope>

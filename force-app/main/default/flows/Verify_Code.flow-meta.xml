@@ -25,9 +25,11 @@
             </value>
         </inputParameters>
         <nameSegment>verifyCustomerCode</nameSegment>
+        <offset>0</offset>
         <storeOutputAutomatically>true</storeOutputAutomatically>
     </actionCalls>
     <apiVersion>65.0</apiVersion>
+    <areMetricsLoggedToDataCloud>false</areMetricsLoggedToDataCloud>
     <assignments>
         <description>Sets the isVerified variable to false.</description>
         <name>SetIsVerifiedToFalse</name>

@@ -1,0 +1,65 @@
+{
+  "required" : [ "accountId", "storefrontId", "description" ],
+  "unevaluatedProperties" : false,
+  "properties" : {
+    "accountId" : {
+      "title" : "Account Id",
+      "description" : "The Account Id that owns the storefront. Required for security validation.",
+      "lightning:type" : "lightning__textType",
+      "lightning:isPII" : false,
+      "copilotAction:isUserInput" : false
+    },
+    "storefrontId" : {
+      "title" : "Storefront Id",
+      "description" : "The Storefront__c record Id to associate the promotion with.",
+      "lightning:type" : "lightning__textType",
+      "lightning:isPII" : false,
+      "copilotAction:isUserInput" : false
+    },
+    "description" : {
+      "title" : "Description",
+      "description" : "Description of the promotion.",
+      "lightning:type" : "lightning__textType",
+      "lightning:isPII" : false,
+      "copilotAction:isUserInput" : false
+    },
+    "discountPercentage" : {
+      "title" : "Discount Percentage",
+      "description" : "Discount percentage, e.g., 10 for 10% off.",
+      "multipleOf" : 1.0E-34,
+      "lightning:type" : "lightning__numberType",
+      "lightning:isPII" : false,
+      "copilotAction:isUserInput" : false
+    },
+    "startDate" : {
+      "title" : "Start Date",
+      "description" : "Promotion start date. Format: YYYY-MM-DD.",
+      "lightning:type" : "lightning__textType",
+      "lightning:isPII" : false,
+      "copilotAction:isUserInput" : false
+    },
+    "endDate" : {
+      "title" : "End Date",
+      "description" : "Promotion end date. Format: YYYY-MM-DD.",
+      "lightning:type" : "lightning__textType",
+      "lightning:isPII" : false,
+      "copilotAction:isUserInput" : false
+    },
+    "promotionCode" : {
+      "title" : "Promotion Code",
+      "description" : "Optional promo code customers can use.",
+      "lightning:type" : "lightning__textType",
+      "lightning:isPII" : false,
+      "copilotAction:isUserInput" : false
+    },
+    "status" : {
+      "title" : "Status",
+      "description" : "Initial status. Defaults to Draft if not provided.",
+      "lightning:type" : "lightning__textType",
+      "lightning:isPII" : false,
+      "copilotAction:isUserInput" : false
+    }
+  },
+  "lightning:type" : "lightning__objectType",
+  "lightning:textIndexed" : true
+}

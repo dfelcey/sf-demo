@@ -35,6 +35,7 @@
             </value>
         </inputParameters>
         <nameSegment>emailSimple</nameSegment>
+        <offset>0</offset>
     </actionCalls>
     <actionCalls>
         <description>Generated verification code</description>
@@ -49,9 +50,11 @@
         </connector>
         <flowTransactionModel>CurrentTransaction</flowTransactionModel>
         <nameSegment>generateVerificationCode</nameSegment>
+        <offset>0</offset>
         <storeOutputAutomatically>true</storeOutputAutomatically>
     </actionCalls>
     <apiVersion>65.0</apiVersion>
+    <areMetricsLoggedToDataCloud>false</areMetricsLoggedToDataCloud>
     <assignments>
         <description>Sets the VerificationCode variable to the value returned by GenerateVerificationCode Action.</description>
         <name>SetVerificationCode</name>

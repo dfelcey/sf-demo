@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <GenAiPlugin xmlns="http://soap.sforce.com/2006/04/metadata" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <canEscalate>false</canEscalate>
     <description>View and update menus and menu items (except pricing).</description>
     <developerName>Menu_Management</developerName>
     <genAiFunctions>
@@ -16,44 +17,52 @@
         <developerName>instruction_1</developerName>
         <language xsi:nil="true"/>
         <masterLabel>Instruction 1</masterLabel>
+        <sortOrder>0</sortOrder>
     </genAiPluginInstructions>
     <genAiPluginInstructions>
         <description>VIEW MENUS: Call Get_Active_Menus with the storefrontId and accountId. Display menu names and descriptions. Ask which menu the merchant wants to explore.</description>
         <developerName>instruction_2</developerName>
         <language xsi:nil="true"/>
         <masterLabel>Instruction 2</masterLabel>
+        <sortOrder>0</sortOrder>
     </genAiPluginInstructions>
     <genAiPluginInstructions>
         <description>VIEW ITEMS: Call Get_Menu_Items with the menuId (or storefrontId for all items) plus accountId. Display item name, description, price, calories, and availability status.</description>
         <developerName>instruction_3</developerName>
         <language xsi:nil="true"/>
         <masterLabel>Instruction 3</masterLabel>
+        <sortOrder>0</sortOrder>
     </genAiPluginInstructions>
     <genAiPluginInstructions>
         <description>UPDATE ITEMS: You can update description, availability (true/false), calories, and image URL. To update an item, you need its menuItemId from the Get_Menu_Items result, plus the accountId.</description>
         <developerName>instruction_4</developerName>
         <language xsi:nil="true"/>
         <masterLabel>Instruction 4</masterLabel>
+        <sortOrder>0</sortOrder>
     </genAiPluginInstructions>
     <genAiPluginInstructions>
         <description>PRICE CHANGES: I do NOT handle price updates. If the merchant wants to change a price, say &quot;Price changes are handled separately. Would you like me to help you update the price for [item name]?&quot; Then use the Pricing Management topic.</description>
         <developerName>instruction_5</developerName>
         <language xsi:nil="true"/>
         <masterLabel>Instruction 5</masterLabel>
+        <sortOrder>0</sortOrder>
     </genAiPluginInstructions>
     <genAiPluginInstructions>
         <description>MARK UNAVAILABLE: When a merchant says an item is &quot;sold out&quot; or &quot;86&apos;d&quot;, update the item&apos;s availability to false. Confirm: &quot;I&apos;ve marked [item] as unavailable.&quot;</description>
         <developerName>instruction_6</developerName>
         <language xsi:nil="true"/>
         <masterLabel>Instruction 6</masterLabel>
+        <sortOrder>0</sortOrder>
     </genAiPluginInstructions>
     <genAiPluginInstructions>
         <description>IDENTITY FIRST: If you do not already have the merchant&apos;s accountId, ask for their email and call Get_Customer_Profile to get accountId before showing menus or items. Use that accountId for all menu operations. Do NOT ask the user for Salesforce IDs.</description>
         <developerName>instruction_identity</developerName>
         <language xsi:nil="true"/>
         <masterLabel>Identity First</masterLabel>
+        <sortOrder>0</sortOrder>
     </genAiPluginInstructions>
     <language>en_US</language>
+    <localDeveloperName>Menu_Management</localDeveloperName>
     <masterLabel>Menu Management</masterLabel>
     <pluginType>Topic</pluginType>
     <scope>I view and update menus and menu items. I can show active menus, list items with details, update descriptions/availability/calories. I do NOT change prices - that&apos;s handled by Pricing Management.</scope>

@@ -1,0 +1,15 @@
+{
+  "required" : [ "accountId" ],
+  "unevaluatedProperties" : false,
+  "properties" : {
+    "accountId" : {
+      "title" : "Account Id",
+      "description" : "The Account Id that owns the storefronts. GET THIS FROM Get_Customer_Profile (email verification). Do NOT ask the user for this value.",
+      "lightning:type" : "lightning__recordIdType",
+      "lightning:isPII" : false,
+      "copilotAction:isUserInput" : false
+    }
+  },
+  "lightning:type" : "lightning__objectType",
+  "lightning:textIndexed" : true
+}

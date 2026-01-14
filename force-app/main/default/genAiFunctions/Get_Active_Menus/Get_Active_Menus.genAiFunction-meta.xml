@@ -1,8 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <GenAiFunction xmlns="http://soap.sforce.com/2006/04/metadata">
     <description>Retrieves all active menus for a given storefront. Requires accountId for security.</description>
+    <developerName>Get_Active_Menus</developerName>
     <invocationTarget>AgentGetActiveMenusActions</invocationTarget>
     <invocationTargetType>apex</invocationTargetType>
     <isConfirmationRequired>false</isConfirmationRequired>
+    <isIncludeInProgressIndicator>false</isIncludeInProgressIndicator>
+    <localDeveloperName>Get_Active_Menus</localDeveloperName>
     <masterLabel>Get Active Menus</masterLabel>
 </GenAiFunction>

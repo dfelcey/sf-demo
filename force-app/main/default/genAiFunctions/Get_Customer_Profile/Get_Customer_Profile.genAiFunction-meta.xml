@@ -1,8 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <GenAiFunction xmlns="http://soap.sforce.com/2006/04/metadata">
     <description>Get a customer&apos;s profile by email or Id. Returns customer details including their Account Id for use with other actions.</description>
+    <developerName>Get_Customer_Profile</developerName>
     <invocationTarget>AgentCustomerActions</invocationTarget>
     <invocationTargetType>apex</invocationTargetType>
     <isConfirmationRequired>false</isConfirmationRequired>
+    <isIncludeInProgressIndicator>false</isIncludeInProgressIndicator>
+    <localDeveloperName>Get_Customer_Profile</localDeveloperName>
     <masterLabel>Get Customer Profile</masterLabel>
 </GenAiFunction>

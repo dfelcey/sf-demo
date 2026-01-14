@@ -1,0 +1,29 @@
+{
+  "required" : [ "accountId", "promotionId", "status" ],
+  "unevaluatedProperties" : false,
+  "properties" : {
+    "accountId" : {
+      "title" : "Account Id",
+      "description" : "The Account Id that owns the storefront. Required for security validation.",
+      "lightning:type" : "lightning__textType",
+      "lightning:isPII" : false,
+      "copilotAction:isUserInput" : false
+    },
+    "promotionId" : {
+      "title" : "Promotion Id",
+      "description" : "The Promotion__c record Id to update.",
+      "lightning:type" : "lightning__textType",
+      "lightning:isPII" : false,
+      "copilotAction:isUserInput" : false
+    },
+    "status" : {
+      "title" : "Status",
+      "description" : "New status for the promotion. Common values: Draft, Active, Paused, Ended.",
+      "lightning:type" : "lightning__textType",
+      "lightning:isPII" : false,
+      "copilotAction:isUserInput" : false
+    }
+  },
+  "lightning:type" : "lightning__objectType",
+  "lightning:textIndexed" : true
+}

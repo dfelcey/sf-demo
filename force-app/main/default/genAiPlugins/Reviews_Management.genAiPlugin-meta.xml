@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <GenAiPlugin xmlns="http://soap.sforce.com/2006/04/metadata" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <canEscalate>false</canEscalate>
     <description>View and analyze customer reviews and ratings.</description>
     <developerName>Reviews_Management</developerName>
     <genAiFunctions>
@@ -10,50 +11,59 @@
         <developerName>instruction_1</developerName>
         <language xsi:nil="true"/>
         <masterLabel>Instruction 1</masterLabel>
+        <sortOrder>0</sortOrder>
     </genAiPluginInstructions>
     <genAiPluginInstructions>
         <description>DEFAULT TIMEFRAME: If not specified, retrieve reviews from the last 30 days. If user asks for &quot;recent&quot; reviews, use 7 days. Accept custom timeframes like &quot;last 2 weeks&quot; (14 days).</description>
         <developerName>instruction_2</developerName>
         <language xsi:nil="true"/>
         <masterLabel>Instruction 2</masterLabel>
+        <sortOrder>0</sortOrder>
     </genAiPluginInstructions>
     <genAiPluginInstructions>
         <description>PRESENT SUMMARY: Always start with the average rating and total count: &quot;[Storefront] has an average rating of [X] stars from [N] reviews in the last [days] days.&quot;</description>
         <developerName>instruction_3</developerName>
         <language xsi:nil="true"/>
         <masterLabel>Instruction 3</masterLabel>
+        <sortOrder>0</sortOrder>
     </genAiPluginInstructions>
     <genAiPluginInstructions>
         <description>RATING BREAKDOWN: Show the distribution: &quot;5-star: [N], 4-star: [N], 3-star: [N], 2-star: [N], 1-star: [N]&quot;. Highlight if there&apos;s a trend (e.g., &quot;Most reviews are positive with [X] 5-star ratings&quot;).</description>
         <developerName>instruction_4</developerName>
         <language xsi:nil="true"/>
         <masterLabel>Instruction 4</masterLabel>
+        <sortOrder>0</sortOrder>
     </genAiPluginInstructions>
     <genAiPluginInstructions>
         <description>ANALYZE COMMENTS: Read through the review comments and identify common themes. What do customers praise? What do they complain about? Summarize in 2-3 bullet points.</description>
         <developerName>instruction_5</developerName>
         <language xsi:nil="true"/>
         <masterLabel>Instruction 5</masterLabel>
+        <sortOrder>0</sortOrder>
     </genAiPluginInstructions>
     <genAiPluginInstructions>
         <description>ACTIONABLE INSIGHTS: End with 1-2 recommendations based on the reviews. For example: &quot;Consider addressing wait times during lunch hours&quot; or &quot;Customers love your desserts - consider promoting them more.&quot;</description>
         <developerName>instruction_6</developerName>
         <language xsi:nil="true"/>
         <masterLabel>Instruction 6</masterLabel>
+        <sortOrder>0</sortOrder>
     </genAiPluginInstructions>
     <genAiPluginInstructions>
         <description>NO REVIEWS: If there are no reviews in the timeframe, say &quot;No reviews found in the last [X] days. Would you like me to check a longer timeframe?&quot;</description>
         <developerName>instruction_7</developerName>
         <language xsi:nil="true"/>
         <masterLabel>Instruction 7</masterLabel>
+        <sortOrder>0</sortOrder>
     </genAiPluginInstructions>
     <genAiPluginInstructions>
         <description>IDENTITY FIRST: If you do not already have the merchant&apos;s accountId, ask for their email and call Get_Customer_Profile to get accountId before summarizing reviews. Use that accountId for all actions. Do NOT ask the user for Salesforce IDs.</description>
         <developerName>instruction_identity</developerName>
         <language xsi:nil="true"/>
         <masterLabel>Identity First</masterLabel>
+        <sortOrder>0</sortOrder>
     </genAiPluginInstructions>
     <language>en_US</language>
+    <localDeveloperName>Reviews_Management</localDeveloperName>
     <masterLabel>Reviews Management</masterLabel>
     <pluginType>Topic</pluginType>
     <scope>I analyze customer reviews and provide insights. I show rating summaries, identify trends in feedback, and give actionable recommendations to help improve the business.</scope>

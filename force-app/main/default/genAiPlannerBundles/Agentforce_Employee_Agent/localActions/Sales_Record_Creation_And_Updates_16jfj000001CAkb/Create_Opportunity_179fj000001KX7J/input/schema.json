@@ -1,0 +1,65 @@
+{
+  "required" : [ "accountId", "accountName", "amount", "closeDate", "description", "opportunityName", "opportunityType" ],
+  "unevaluatedProperties" : false,
+  "properties" : {
+    "accountId" : {
+      "title" : "Account ID",
+      "description" : "The Salesforce ID of the Account",
+      "lightning:type" : "lightning__textType",
+      "lightning:isPII" : false,
+      "copilotAction:isUserInput" : false
+    },
+    "accountName" : {
+      "title" : "Account Name",
+      "description" : "Name of the Account (used if Account ID not provided)",
+      "lightning:type" : "lightning__textType",
+      "lightning:isPII" : false,
+      "copilotAction:isUserInput" : false
+    },
+    "amount" : {
+      "title" : "Amount",
+      "description" : "Opportunity amount",
+      "multipleOf" : 1.0E-34,
+      "lightning:type" : "lightning__numberType",
+      "lightning:isPII" : false,
+      "copilotAction:isUserInput" : false
+    },
+    "closeDate" : {
+      "title" : "Close Date",
+      "description" : "Expected close date (defaults to 30 days from today)",
+      "lightning:type" : "lightning__dateType",
+      "lightning:isPII" : false,
+      "copilotAction:isUserInput" : false
+    },
+    "description" : {
+      "title" : "Description",
+      "description" : "Opportunity description",
+      "lightning:type" : "lightning__textType",
+      "lightning:isPII" : false,
+      "copilotAction:isUserInput" : false
+    },
+    "opportunityName" : {
+      "title" : "Opportunity Name",
+      "description" : "Name for the new Opportunity",
+      "lightning:type" : "lightning__textType",
+      "lightning:isPII" : false,
+      "copilotAction:isUserInput" : false
+    },
+    "opportunityType" : {
+      "title" : "Opportunity Type",
+      "description" : "Type of opportunity (e.g., New Business, Existing Customer)",
+      "lightning:type" : "lightning__textType",
+      "lightning:isPII" : false,
+      "copilotAction:isUserInput" : false
+    },
+    "stageName" : {
+      "title" : "Stage Name",
+      "description" : "Sales stage (defaults to Prospecting)",
+      "lightning:type" : "lightning__textType",
+      "lightning:isPII" : false,
+      "copilotAction:isUserInput" : false
+    }
+  },
+  "lightning:type" : "lightning__objectType",
+  "lightning:textIndexed" : true
+}

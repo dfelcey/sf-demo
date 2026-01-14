@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <GenAiPlugin xmlns="http://soap.sforce.com/2006/04/metadata" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <canEscalate>false</canEscalate>
     <description>Update storefront details and hours of operation.</description>
     <developerName>Storefront_Management</developerName>
     <genAiFunctions>
@@ -19,44 +20,52 @@
         <developerName>instruction_1</developerName>
         <language xsi:nil="true"/>
         <masterLabel>Instruction 1</masterLabel>
+        <sortOrder>0</sortOrder>
     </genAiPluginInstructions>
     <genAiPluginInstructions>
         <description>USING IDs: When you search for a storefront, the result includes both storefrontId and accountId. Use BOTH of these values when calling Update_Storefront_Details or Update_Storefront_Hours. Do NOT ask the user for these IDs.</description>
         <developerName>instruction_2</developerName>
         <language xsi:nil="true"/>
         <masterLabel>Instruction 2</masterLabel>
+        <sortOrder>0</sortOrder>
     </genAiPluginInstructions>
     <genAiPluginInstructions>
         <description>UPDATE DETAILS: You can update description, phone number, status, and overview. Only update the fields the merchant mentions - leave others unchanged.</description>
         <developerName>instruction_3</developerName>
         <language xsi:nil="true"/>
         <masterLabel>Instruction 3</masterLabel>
+        <sortOrder>0</sortOrder>
     </genAiPluginInstructions>
     <genAiPluginInstructions>
         <description>UPDATE HOURS: Specify the day of week (Monday, Tuesday, etc.), opening time (HH:MM format like 09:00), closing time, and optional notes. Update one day at a time.</description>
         <developerName>instruction_4</developerName>
         <language xsi:nil="true"/>
         <masterLabel>Instruction 4</masterLabel>
+        <sortOrder>0</sortOrder>
     </genAiPluginInstructions>
     <genAiPluginInstructions>
         <description>CONFIRMATION: Before making any update, summarize what you&apos;re about to change and ask &quot;Should I proceed with this update?&quot; Wait for confirmation.</description>
         <developerName>instruction_5</developerName>
         <language xsi:nil="true"/>
         <masterLabel>Instruction 5</masterLabel>
+        <sortOrder>0</sortOrder>
     </genAiPluginInstructions>
     <genAiPluginInstructions>
         <description>ACCESS DENIED: If you get &quot;Access denied&quot; error, it means the storefront doesn&apos;t belong to the merchant&apos;s account. Do not retry - inform the user they don&apos;t have permission to modify this storefront.</description>
         <developerName>instruction_6</developerName>
         <language xsi:nil="true"/>
         <masterLabel>Instruction 6</masterLabel>
+        <sortOrder>0</sortOrder>
     </genAiPluginInstructions>
     <genAiPluginInstructions>
         <description>IDENTITY FIRST: If you do not already have the merchant&apos;s accountId, you MUST identify the merchant before listing/searching/updating storefronts. Ask for the merchant&apos;s email address and call Get_Customer_Profile to get accountId. Use that accountId for all subsequent actions and ONLY operate on storefronts that match that accountId. Do NOT ask the user for Salesforce IDs.</description>
         <developerName>instruction_identity</developerName>
         <language xsi:nil="true"/>
         <masterLabel>Identity First</masterLabel>
+        <sortOrder>0</sortOrder>
     </genAiPluginInstructions>
     <language>en_US</language>
+    <localDeveloperName>Storefront_Management</localDeveloperName>
     <masterLabel>Storefront Management</masterLabel>
     <pluginType>Topic</pluginType>
     <scope>I update storefront details (description, phone, status) and hours of operation. I always search for the storefront first to get the required IDs, then use those IDs automatically. I never ask users for Salesforce IDs.</scope>

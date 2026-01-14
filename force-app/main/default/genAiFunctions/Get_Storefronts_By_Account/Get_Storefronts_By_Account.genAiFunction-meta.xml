@@ -1,8 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <GenAiFunction xmlns="http://soap.sforce.com/2006/04/metadata">
     <description>Lists storefronts for a given Account Id and returns results as Apex-defined DTOs for reliable serialization.</description>
+    <developerName>Get_Storefronts_By_Account</developerName>
     <invocationTarget>AgentGetStorefrontsByAccountActions</invocationTarget>
     <invocationTargetType>apex</invocationTargetType>
     <isConfirmationRequired>false</isConfirmationRequired>
+    <isIncludeInProgressIndicator>false</isIncludeInProgressIndicator>
+    <localDeveloperName>Get_Storefronts_By_Account</localDeveloperName>
     <masterLabel>Get Storefronts By Account</masterLabel>
 </GenAiFunction>

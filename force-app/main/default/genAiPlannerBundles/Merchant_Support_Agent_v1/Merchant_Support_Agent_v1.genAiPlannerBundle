@@ -1,0 +1,739 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<GenAiPlannerBundle xmlns="http://soap.sforce.com/2006/04/metadata" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <description>The Merchant Support Agent is dedicated to ensuring seamless operations for Pronto&apos;s restaurant and merchant partners. This agent assists with menu updates, performance insights, logistical resolutions, and account management to foster strong and productive partnerships. With intelligent automation and real-time support, the agent helps merchants stay focused on delivering excellent customer experiences</description>
+    <localActionLinks>
+        <genAiFunctionName>AnswerQuestionsWithKnowledge_16jKj000000Xizb</genAiFunctionName>
+    </localActionLinks>
+    <localTopicLinks>
+        <genAiPluginName>Customer_Identification_16jKj000000Xizb</genAiPluginName>
+    </localTopicLinks>
+    <localTopicLinks>
+        <genAiPluginName>Menu_Management_16jKj000000Xizb</genAiPluginName>
+    </localTopicLinks>
+    <localTopicLinks>
+        <genAiPluginName>Pricing_Management_16jKj000000Xizb</genAiPluginName>
+    </localTopicLinks>
+    <localTopicLinks>
+        <genAiPluginName>Promotions_Management_16jKj000000Xizb</genAiPluginName>
+    </localTopicLinks>
+    <localTopicLinks>
+        <genAiPluginName>ReservationManagement_16jKj000000Xizb</genAiPluginName>
+    </localTopicLinks>
+    <localTopicLinks>
+        <genAiPluginName>Reviews_Management_16jKj000000Xizb</genAiPluginName>
+    </localTopicLinks>
+    <localTopicLinks>
+        <genAiPluginName>Storefront_Management_16jKj000000Xizb</genAiPluginName>
+    </localTopicLinks>
+    <localTopics>
+        <fullName>Customer_Identification_16jKj000000Xizb</fullName>
+        <canEscalate>false</canEscalate>
+        <description>Identify and verify a merchant customer before performing storefront operations.</description>
+        <developerName>Customer_Identification_16jKj000000Xizb</developerName>
+        <genAiPluginInstructions>
+            <description>DEFAULT: If you do not yet know the merchant&apos;s accountId and the user asks to show/search/update anything about storefronts, menus, prices, promotions, or reviews, ask for the merchant&apos;s email and run this topic first to get accountId.</description>
+            <developerName>instruction_1</developerName>
+            <language xsi:nil="true"/>
+            <masterLabel>Instruction 1</masterLabel>
+            <sortOrder>0</sortOrder>
+        </genAiPluginInstructions>
+        <genAiPluginInstructions>
+            <description>SHORTCUT: If the merchant already searched for a storefront and you have the accountId from that search result, you do NOT need to verify their identity again. Use the accountId from the storefront search.</description>
+            <developerName>instruction_2</developerName>
+            <language xsi:nil="true"/>
+            <masterLabel>Instruction 2</masterLabel>
+            <sortOrder>1</sortOrder>
+        </genAiPluginInstructions>
+        <genAiPluginInstructions>
+            <description>HOW TO VERIFY: Ask for the merchant&apos;s email address. Call Get_Customer_Profile with that email. The response includes their accountId, firstName, and lastName.</description>
+            <developerName>instruction_3</developerName>
+            <language xsi:nil="true"/>
+            <masterLabel>Instruction 3</masterLabel>
+            <sortOrder>2</sortOrder>
+        </genAiPluginInstructions>
+        <genAiPluginInstructions>
+            <description>NEVER ask the user to confirm or provide a Salesforce record Id. Users don&apos;t know their accountId, storefrontId, etc. Always look these up using name or email.</description>
+            <developerName>instruction_4</developerName>
+            <language xsi:nil="true"/>
+            <masterLabel>Instruction 4</masterLabel>
+            <sortOrder>3</sortOrder>
+        </genAiPluginInstructions>
+        <genAiPluginInstructions>
+            <description>SUCCESS: After identifying the customer, greet them by name: &quot;Hello [FirstName]! I found your account.&quot; Then proceed with their request.</description>
+            <developerName>instruction_5</developerName>
+            <language xsi:nil="true"/>
+            <masterLabel>Instruction 5</masterLabel>
+            <sortOrder>4</sortOrder>
+        </genAiPluginInstructions>
+        <genAiPluginInstructions>
+            <description>NOT FOUND: If no customer is found, say &quot;I couldn&apos;t find an account with that email. Please check the email address and try again.&quot;</description>
+            <developerName>instruction_6</developerName>
+            <language xsi:nil="true"/>
+            <masterLabel>Instruction 6</masterLabel>
+            <sortOrder>5</sortOrder>
+        </genAiPluginInstructions>
+        <language>en_US</language>
+        <localActionLinks>
+            <functionName>Get_Customer_Profile_179Kj000000LakD</functionName>
+        </localActionLinks>
+        <localActions>
+            <fullName>Get_Customer_Profile_179Kj000000LakD</fullName>
+            <description>Get a customer&apos;s profile by email or Id. Returns customer details including their Account Id for use with other actions.</description>
+            <developerName>Get_Customer_Profile_179Kj000000LakD</developerName>
+            <invocationTarget>AgentCustomerActions</invocationTarget>
+            <invocationTargetType>apex</invocationTargetType>
+            <isConfirmationRequired>false</isConfirmationRequired>
+            <isIncludeInProgressIndicator>false</isIncludeInProgressIndicator>
+            <localDeveloperName>Get_Customer_Profile</localDeveloperName>
+            <masterLabel>Get Customer Profile</masterLabel>
+            <source>Get_Customer_Profile</source>
+        </localActions>
+        <localDeveloperName>Customer_Identification</localDeveloperName>
+        <masterLabel>Customer Identification</masterLabel>
+        <pluginType>Topic</pluginType>
+        <scope>I verify merchant identity by email when needed. If the merchant already searched for a storefront, I use the accountId from that result instead of asking for verification again. I NEVER ask users for Salesforce record IDs.</scope>
+        <source>Customer_Identification</source>
+    </localTopics>
+    <localTopics>
+        <fullName>Menu_Management_16jKj000000Xizb</fullName>
+        <canEscalate>false</canEscalate>
+        <description>View and update menus and menu items (except pricing).</description>
+        <developerName>Menu_Management_16jKj000000Xizb</developerName>
+        <genAiPluginInstructions>
+            <description>IDENTITY FIRST: If you do not already have the merchant&apos;s accountId, ask for their email and call Get_Customer_Profile to get accountId before showing menus or items. Use that accountId for all menu operations. Do NOT ask the user for Salesforce IDs.</description>
+            <developerName>instruction_identity</developerName>
+            <language xsi:nil="true"/>
+            <masterLabel>Identity First</masterLabel>
+            <sortOrder>0</sortOrder>
+        </genAiPluginInstructions>
+        <genAiPluginInstructions>
+            <description>PREREQUISITE: You need the storefrontId and accountId before viewing menus or items. Get these by searching for the storefront by name first. The accountId from the storefront search is used for all menu operations.</description>
+            <developerName>instruction_1</developerName>
+            <language xsi:nil="true"/>
+            <masterLabel>Instruction 1</masterLabel>
+            <sortOrder>1</sortOrder>
+        </genAiPluginInstructions>
+        <genAiPluginInstructions>
+            <description>VIEW MENUS: Call Get_Active_Menus with the storefrontId and accountId. Display menu names and descriptions. Ask which menu the merchant wants to explore.</description>
+            <developerName>instruction_2</developerName>
+            <language xsi:nil="true"/>
+            <masterLabel>Instruction 2</masterLabel>
+            <sortOrder>2</sortOrder>
+        </genAiPluginInstructions>
+        <genAiPluginInstructions>
+            <description>VIEW ITEMS: Call Get_Menu_Items with the menuId (or storefrontId for all items) plus accountId. Display item name, description, price, calories, and availability status.</description>
+            <developerName>instruction_3</developerName>
+            <language xsi:nil="true"/>
+            <masterLabel>Instruction 3</masterLabel>
+            <sortOrder>3</sortOrder>
+        </genAiPluginInstructions>
+        <genAiPluginInstructions>
+            <description>UPDATE ITEMS: You can update description, availability (true/false), calories, and image URL. To update an item, you need its menuItemId from the Get_Menu_Items result, plus the accountId.</description>
+            <developerName>instruction_4</developerName>
+            <language xsi:nil="true"/>
+            <masterLabel>Instruction 4</masterLabel>
+            <sortOrder>4</sortOrder>
+        </genAiPluginInstructions>
+        <genAiPluginInstructions>
+            <description>PRICE CHANGES: I do NOT handle price updates. If the merchant wants to change a price, say &quot;Price changes are handled separately. Would you like me to help you update the price for [item name]?&quot; Then use the Pricing Management topic.</description>
+            <developerName>instruction_5</developerName>
+            <language xsi:nil="true"/>
+            <masterLabel>Instruction 5</masterLabel>
+            <sortOrder>5</sortOrder>
+        </genAiPluginInstructions>
+        <genAiPluginInstructions>
+            <description>MARK UNAVAILABLE: When a merchant says an item is &quot;sold out&quot; or &quot;86&apos;d&quot;, update the item&apos;s availability to false. Confirm: &quot;I&apos;ve marked [item] as unavailable.&quot;</description>
+            <developerName>instruction_6</developerName>
+            <language xsi:nil="true"/>
+            <masterLabel>Instruction 6</masterLabel>
+            <sortOrder>6</sortOrder>
+        </genAiPluginInstructions>
+        <language>en_US</language>
+        <localActionLinks>
+            <functionName>Get_Menu_Items_179Kj000000LakC</functionName>
+        </localActionLinks>
+        <localActionLinks>
+            <functionName>Get_Active_Menus_179Kj000000LakC</functionName>
+        </localActionLinks>
+        <localActionLinks>
+            <functionName>Update_Menu_Item_179Kj000000LakC</functionName>
+        </localActionLinks>
+        <localActions>
+            <fullName>Get_Active_Menus_179Kj000000LakC</fullName>
+            <description>Retrieves all active menus for a given storefront. Requires accountId for security.</description>
+            <developerName>Get_Active_Menus_179Kj000000LakC</developerName>
+            <invocationTarget>AgentGetActiveMenusActions</invocationTarget>
+            <invocationTargetType>apex</invocationTargetType>
+            <isConfirmationRequired>false</isConfirmationRequired>
+            <isIncludeInProgressIndicator>false</isIncludeInProgressIndicator>
+            <localDeveloperName>Get_Active_Menus</localDeveloperName>
+            <masterLabel>Get Active Menus</masterLabel>
+            <source>Get_Active_Menus</source>
+        </localActions>
+        <localActions>
+            <fullName>Get_Menu_Items_179Kj000000LakC</fullName>
+            <description>Retrieves menu items for a selected menu or all items for a storefront.</description>
+            <developerName>Get_Menu_Items_179Kj000000LakC</developerName>
+            <invocationTarget>AgentGetMenuItemsActions</invocationTarget>
+            <invocationTargetType>apex</invocationTargetType>
+            <isConfirmationRequired>false</isConfirmationRequired>
+            <isIncludeInProgressIndicator>false</isIncludeInProgressIndicator>
+            <localDeveloperName>Get_Menu_Items</localDeveloperName>
+            <masterLabel>Get Menu Items</masterLabel>
+            <source>Get_Menu_Items</source>
+        </localActions>
+        <localActions>
+            <fullName>Update_Menu_Item_179Kj000000LakC</fullName>
+            <description>Updates descriptive menu item fields such as description, availability, calories, and image URL. Does NOT update price.</description>
+            <developerName>Update_Menu_Item_179Kj000000LakC</developerName>
+            <invocationTarget>AgentUpdateMenuItemActions</invocationTarget>
+            <invocationTargetType>apex</invocationTargetType>
+            <isConfirmationRequired>true</isConfirmationRequired>
+            <isIncludeInProgressIndicator>false</isIncludeInProgressIndicator>
+            <localDeveloperName>Update_Menu_Item</localDeveloperName>
+            <masterLabel>Update Menu Item</masterLabel>
+            <source>Update_Menu_Item</source>
+        </localActions>
+        <localDeveloperName>Menu_Management</localDeveloperName>
+        <masterLabel>Menu Management</masterLabel>
+        <pluginType>Topic</pluginType>
+        <scope>I view and update menus and menu items. I can show active menus, list items with details, update descriptions/availability/calories. I do NOT change prices - that&apos;s handled by Pricing Management.</scope>
+        <source>Menu_Management</source>
+    </localTopics>
+    <localTopics>
+        <fullName>Pricing_Management_16jKj000000Xizb</fullName>
+        <canEscalate>false</canEscalate>
+        <description>Update menu item prices with proper confirmation.</description>
+        <developerName>Pricing_Management_16jKj000000Xizb</developerName>
+        <genAiPluginInstructions>
+            <description>IDENTITY FIRST: If you do not already have the merchant&apos;s accountId, ask for their email and call Get_Customer_Profile to get accountId before doing any pricing work. Use that accountId for all actions. Do NOT ask the user for Salesforce IDs.</description>
+            <developerName>instruction_identity</developerName>
+            <language xsi:nil="true"/>
+            <masterLabel>Identity First</masterLabel>
+            <sortOrder>0</sortOrder>
+        </genAiPluginInstructions>
+        <genAiPluginInstructions>
+            <description>PREREQUISITE: You need the storefrontId and accountId from a storefront search. Then get the menuItemId by calling Get_Menu_Items to find the specific item.</description>
+            <developerName>instruction_1</developerName>
+            <language xsi:nil="true"/>
+            <masterLabel>Instruction 1</masterLabel>
+            <sortOrder>1</sortOrder>
+        </genAiPluginInstructions>
+        <genAiPluginInstructions>
+            <description>SHOW CURRENT PRICE: Before changing a price, always show the current price first. Say &quot;The current price for [item] is $[price]. You want to change it to $[new price]. Is that correct?&quot;</description>
+            <developerName>instruction_2</developerName>
+            <language xsi:nil="true"/>
+            <masterLabel>Instruction 2</masterLabel>
+            <sortOrder>2</sortOrder>
+        </genAiPluginInstructions>
+        <genAiPluginInstructions>
+            <description>CONFIRMATION REQUIRED: Price changes are sensitive. Always get explicit confirmation before updating. Wait for &quot;yes&quot; or clear approval.</description>
+            <developerName>instruction_3</developerName>
+            <language xsi:nil="true"/>
+            <masterLabel>Instruction 3</masterLabel>
+            <sortOrder>3</sortOrder>
+        </genAiPluginInstructions>
+        <genAiPluginInstructions>
+            <description>SUCCESS MESSAGE: After updating, confirm: &quot;Done! I&apos;ve updated [item] from $[old price] to $[new price].&quot;</description>
+            <developerName>instruction_4</developerName>
+            <language xsi:nil="true"/>
+            <masterLabel>Instruction 4</masterLabel>
+            <sortOrder>4</sortOrder>
+        </genAiPluginInstructions>
+        <genAiPluginInstructions>
+            <description>PERMISSION ERROR: If you get a permission error, say &quot;You don&apos;t have permission to change prices. Please contact your administrator to request pricing access.&quot;</description>
+            <developerName>instruction_5</developerName>
+            <language xsi:nil="true"/>
+            <masterLabel>Instruction 5</masterLabel>
+            <sortOrder>5</sortOrder>
+        </genAiPluginInstructions>
+        <genAiPluginInstructions>
+            <description>PRICE FORMAT: Accept prices in common formats ($14.99, 14.99, $15). Convert to decimal before calling the action.</description>
+            <developerName>instruction_6</developerName>
+            <language xsi:nil="true"/>
+            <masterLabel>Instruction 6</masterLabel>
+            <sortOrder>6</sortOrder>
+        </genAiPluginInstructions>
+        <language>en_US</language>
+        <localActionLinks>
+            <functionName>Update_Menu_Item_Price_179Kj000000LakB</functionName>
+        </localActionLinks>
+        <localActionLinks>
+            <functionName>Get_Menu_Items_179Kj000000LakB</functionName>
+        </localActionLinks>
+        <localActions>
+            <fullName>Get_Menu_Items_179Kj000000LakB</fullName>
+            <description>Retrieves menu items for a selected menu or all items for a storefront.</description>
+            <developerName>Get_Menu_Items_179Kj000000LakB</developerName>
+            <invocationTarget>AgentGetMenuItemsActions</invocationTarget>
+            <invocationTargetType>apex</invocationTargetType>
+            <isConfirmationRequired>false</isConfirmationRequired>
+            <isIncludeInProgressIndicator>false</isIncludeInProgressIndicator>
+            <localDeveloperName>Get_Menu_Items</localDeveloperName>
+            <masterLabel>Get Menu Items</masterLabel>
+            <source>Get_Menu_Items</source>
+        </localActions>
+        <localActions>
+            <fullName>Update_Menu_Item_Price_179Kj000000LakB</fullName>
+            <description>Updates the Price__c field on a menu item. Respects field-level security and fails gracefully if access is denied.</description>
+            <developerName>Update_Menu_Item_Price_179Kj000000LakB</developerName>
+            <invocationTarget>AgentUpdateMenuItemPriceActions</invocationTarget>
+            <invocationTargetType>apex</invocationTargetType>
+            <isConfirmationRequired>true</isConfirmationRequired>
+            <isIncludeInProgressIndicator>false</isIncludeInProgressIndicator>
+            <localDeveloperName>Update_Menu_Item_Price</localDeveloperName>
+            <masterLabel>Update Menu Item Price</masterLabel>
+            <source>Update_Menu_Item_Price</source>
+        </localActions>
+        <localDeveloperName>Pricing_Management</localDeveloperName>
+        <masterLabel>Pricing Management</masterLabel>
+        <pluginType>Topic</pluginType>
+        <scope>I update menu item prices. I always show the current price first and require explicit confirmation before making changes. I handle permission errors gracefully.</scope>
+        <source>Pricing_Management</source>
+    </localTopics>
+    <localTopics>
+        <fullName>Promotions_Management_16jKj000000Xizb</fullName>
+        <canEscalate>false</canEscalate>
+        <description>Create and manage promotions and special offers.</description>
+        <developerName>Promotions_Management_16jKj000000Xizb</developerName>
+        <genAiPluginInstructions>
+            <description>IDENTITY FIRST: If you do not already have the merchant&apos;s accountId, ask for their email and call Get_Customer_Profile to get accountId before creating/updating promotions. Use that accountId for all actions. Do NOT ask the user for Salesforce IDs.</description>
+            <developerName>instruction_identity</developerName>
+            <language xsi:nil="true"/>
+            <masterLabel>Identity First</masterLabel>
+            <sortOrder>0</sortOrder>
+        </genAiPluginInstructions>
+        <genAiPluginInstructions>
+            <description>PREREQUISITE: You need the storefrontId and accountId from a storefront search before creating or managing promotions for that storefront.</description>
+            <developerName>instruction_1</developerName>
+            <language xsi:nil="true"/>
+            <masterLabel>Instruction 1</masterLabel>
+            <sortOrder>1</sortOrder>
+        </genAiPluginInstructions>
+        <genAiPluginInstructions>
+            <description>CREATE PROMOTION: Gather these details - description (required), discount percentage, start date, end date, and promo code. Summarize before creating: &quot;I&apos;ll create a promotion: [details]. Should I proceed?&quot;</description>
+            <developerName>instruction_2</developerName>
+            <language xsi:nil="true"/>
+            <masterLabel>Instruction 2</masterLabel>
+            <sortOrder>2</sortOrder>
+        </genAiPluginInstructions>
+        <genAiPluginInstructions>
+            <description>DEFAULT STATUS: New promotions are created with &quot;Draft&quot; status. After creating, ask: &quot;The promotion is saved as a draft. Would you like me to activate it now?&quot;</description>
+            <developerName>instruction_3</developerName>
+            <language xsi:nil="true"/>
+            <masterLabel>Instruction 3</masterLabel>
+            <sortOrder>3</sortOrder>
+        </genAiPluginInstructions>
+        <genAiPluginInstructions>
+            <description>STATUS VALUES: Valid statuses are &quot;Draft&quot;, &quot;Active&quot;, &quot;Paused&quot;, and &quot;Ended&quot;. Map user language: &quot;activate&quot; → Active, &quot;pause/stop&quot; → Paused, &quot;end/cancel/delete&quot; → Ended.</description>
+            <developerName>instruction_4</developerName>
+            <language xsi:nil="true"/>
+            <masterLabel>Instruction 4</masterLabel>
+            <sortOrder>4</sortOrder>
+        </genAiPluginInstructions>
+        <genAiPluginInstructions>
+            <description>DATE FORMAT: Accept dates in common formats (January 15, 2025 or 01/15/2025 or 2025-01-15). Convert to YYYY-MM-DD format for the action.</description>
+            <developerName>instruction_5</developerName>
+            <language xsi:nil="true"/>
+            <masterLabel>Instruction 5</masterLabel>
+            <sortOrder>5</sortOrder>
+        </genAiPluginInstructions>
+        <genAiPluginInstructions>
+            <description>PROMO CODES: Suggest uppercase codes without spaces (e.g., SUMMER20, VALENTINES15). If user provides lowercase, convert to uppercase.</description>
+            <developerName>instruction_6</developerName>
+            <language xsi:nil="true"/>
+            <masterLabel>Instruction 6</masterLabel>
+            <sortOrder>6</sortOrder>
+        </genAiPluginInstructions>
+        <language>en_US</language>
+        <localActionLinks>
+            <functionName>Update_Promotion_Status_179Kj000000Lak9</functionName>
+        </localActionLinks>
+        <localActionLinks>
+            <functionName>Create_Promotion_179Kj000000Lak9</functionName>
+        </localActionLinks>
+        <localActions>
+            <fullName>Update_Promotion_Status_179Kj000000Lak9</fullName>
+            <description>Updates the status of an existing promotion (e.g., activate, pause, end).</description>
+            <developerName>Update_Promotion_Status_179Kj000000Lak9</developerName>
+            <invocationTarget>AgentUpdatePromotionStatusActions</invocationTarget>
+            <invocationTargetType>apex</invocationTargetType>
+            <isConfirmationRequired>true</isConfirmationRequired>
+            <isIncludeInProgressIndicator>false</isIncludeInProgressIndicator>
+            <localDeveloperName>Update_Promotion_Status</localDeveloperName>
+            <masterLabel>Update Promotion Status</masterLabel>
+            <source>Update_Promotion_Status</source>
+        </localActions>
+        <localActions>
+            <fullName>Create_Promotion_179Kj000000Lak9</fullName>
+            <description>Creates a new promotion or offer for a storefront with specified details.</description>
+            <developerName>Create_Promotion_179Kj000000Lak9</developerName>
+            <invocationTarget>AgentCreatePromotionActions</invocationTarget>
+            <invocationTargetType>apex</invocationTargetType>
+            <isConfirmationRequired>true</isConfirmationRequired>
+            <isIncludeInProgressIndicator>false</isIncludeInProgressIndicator>
+            <localDeveloperName>Create_Promotion</localDeveloperName>
+            <masterLabel>Create Promotion</masterLabel>
+            <source>Create_Promotion</source>
+        </localActions>
+        <localDeveloperName>Promotions_Management</localDeveloperName>
+        <masterLabel>Promotions Management</masterLabel>
+        <pluginType>Topic</pluginType>
+        <scope>I create and manage promotions with discounts, date ranges, and promo codes. New promotions start as drafts. I can activate, pause, or end promotions.</scope>
+        <source>Promotions_Management</source>
+    </localTopics>
+    <localTopics>
+        <fullName>ReservationManagement_16jKj000000Xizb</fullName>
+        <canEscalate>false</canEscalate>
+        <description>Handles requests to create new reservations for customers at their desired time slots.</description>
+        <developerName>ReservationManagement_16jKj000000Xizb</developerName>
+        <genAiPluginInstructions>
+            <description>After verifying the customer&apos;s account, ask what date the customer wants to make the reservation.</description>
+            <developerName>Instruction1</developerName>
+            <language xsi:nil="true"/>
+            <masterLabel>Instruction1</masterLabel>
+            <sortOrder>0</sortOrder>
+        </genAiPluginInstructions>
+        <genAiPluginInstructions>
+            <description>If the customer is not known, always ask for their email address and get their Contact record before starting to make a reservation for the customer.</description>
+            <developerName>Instruction2</developerName>
+            <language xsi:nil="true"/>
+            <masterLabel>Instruction2</masterLabel>
+            <sortOrder>1</sortOrder>
+        </genAiPluginInstructions>
+        <genAiPluginInstructions>
+            <description>Once the customer approves and confirms the date and time, then confirm the reservation.</description>
+            <developerName>Instruction3</developerName>
+            <language xsi:nil="true"/>
+            <masterLabel>Instruction3</masterLabel>
+            <sortOrder>2</sortOrder>
+        </genAiPluginInstructions>
+        <genAiPluginInstructions>
+            <description>Once the customer provides a date, lookup available time slots.</description>
+            <developerName>Instruction4</developerName>
+            <language xsi:nil="true"/>
+            <masterLabel>Instruction4</masterLabel>
+            <sortOrder>3</sortOrder>
+        </genAiPluginInstructions>
+        <genAiPluginInstructions>
+            <description>Use the Answer Questions with Knowledge action for answering general reservation questions</description>
+            <developerName>Instruction5</developerName>
+            <language xsi:nil="true"/>
+            <masterLabel>Instruction5</masterLabel>
+            <sortOrder>4</sortOrder>
+        </genAiPluginInstructions>
+        <genAiPluginInstructions>
+            <description>Acknowledge and validate user concerns with empathy and professionalism.</description>
+            <developerName>Instruction6</developerName>
+            <language xsi:nil="true"/>
+            <masterLabel>Instruction6</masterLabel>
+            <sortOrder>5</sortOrder>
+        </genAiPluginInstructions>
+        <language>en_US</language>
+        <localActionLinks>
+            <functionName>FinalizeReservation_179Kj000000Lak8</functionName>
+        </localActionLinks>
+        <localActionLinks>
+            <functionName>IdentifyCustomerByEmail_179Kj000000Lak8</functionName>
+        </localActionLinks>
+        <localActionLinks>
+            <functionName>GetReservationTimeSlots_179Kj000000Lak8</functionName>
+        </localActionLinks>
+        <localActionLinks>
+            <functionName>AnswerQuestionsWithKnowledge_179Kj000000Lak8</functionName>
+        </localActionLinks>
+        <localActions>
+            <fullName>GetReservationTimeSlots_179Kj000000Lak8</fullName>
+            <description>Returns a list of available time slots for the date specified by the customer.</description>
+            <developerName>GetReservationTimeSlots_179Kj000000Lak8</developerName>
+            <invocationTarget>SvcCopilotTmpl__GetAvailableTimeSlots</invocationTarget>
+            <invocationTargetType>flow</invocationTargetType>
+            <isConfirmationRequired>false</isConfirmationRequired>
+            <isIncludeInProgressIndicator>true</isIncludeInProgressIndicator>
+            <localDeveloperName>GetReservationTimeSlots</localDeveloperName>
+            <masterLabel>Get Reservation Time Slots</masterLabel>
+            <source>SvcCopilotTmpl__GetReservationTimeSlots</source>
+        </localActions>
+        <localActions>
+            <fullName>FinalizeReservation_179Kj000000Lak8</fullName>
+            <description>Books and finalizes a reservation for the time designated by the customer.</description>
+            <developerName>FinalizeReservation_179Kj000000Lak8</developerName>
+            <invocationTarget>SvcCopilotTmpl__FinalizeReservation</invocationTarget>
+            <invocationTargetType>flow</invocationTargetType>
+            <isConfirmationRequired>true</isConfirmationRequired>
+            <isIncludeInProgressIndicator>true</isIncludeInProgressIndicator>
+            <localDeveloperName>FinalizeReservation</localDeveloperName>
+            <masterLabel>Finalize Reservation</masterLabel>
+            <source>SvcCopilotTmpl__FinalizeReservation</source>
+        </localActions>
+        <localActions>
+            <fullName>IdentifyCustomerByEmail_179Kj000000Lak8</fullName>
+            <description>Identify a customer by their email address and return their contact record.</description>
+            <developerName>IdentifyCustomerByEmail_179Kj000000Lak8</developerName>
+            <invocationTarget>SvcCopilotTmpl__IdentifyCustomer</invocationTarget>
+            <invocationTargetType>flow</invocationTargetType>
+            <isConfirmationRequired>false</isConfirmationRequired>
+            <isIncludeInProgressIndicator>true</isIncludeInProgressIndicator>
+            <localDeveloperName>IdentifyCustomerByEmail</localDeveloperName>
+            <masterLabel>Identify Customer By Email</masterLabel>
+            <source>SvcCopilotTmpl__IdentifyCustomerByEmail</source>
+        </localActions>
+        <localActions>
+            <fullName>AnswerQuestionsWithKnowledge_179Kj000000Lak8</fullName>
+            <description>Answers questions about company policies and procedures, troubleshooting steps, or product information. For example: “What is your return policy?” “How do I fix an issue?” or “What features does a product have?”</description>
+            <developerName>AnswerQuestionsWithKnowledge_179Kj000000Lak8</developerName>
+            <invocationTarget>streamKnowledgeSearch</invocationTarget>
+            <invocationTargetType>standardInvocableAction</invocationTargetType>
+            <isConfirmationRequired>false</isConfirmationRequired>
+            <isIncludeInProgressIndicator>true</isIncludeInProgressIndicator>
+            <localDeveloperName>AnswerQuestionsWithKnowledge</localDeveloperName>
+            <masterLabel>Answer Questions with Knowledge</masterLabel>
+            <progressIndicatorMessage>Getting answers</progressIndicatorMessage>
+            <source>EmployeeCopilot__AnswerQuestionsWithKnowledge</source>
+        </localActions>
+        <localDeveloperName>ReservationManagement</localDeveloperName>
+        <masterLabel>Reservation Management</masterLabel>
+        <pluginType>Topic</pluginType>
+        <scope>Your job is to make a reservation for a customer. This includes gathering necessary information such as checking available dates and times for the reservation and confirming the reservation.</scope>
+        <source>SvcCopilotTmpl__ReservationManagement</source>
+    </localTopics>
+    <localTopics>
+        <fullName>Storefront_Management_16jKj000000Xizb</fullName>
+        <canEscalate>false</canEscalate>
+        <description>Update storefront details and hours of operation.</description>
+        <developerName>Storefront_Management_16jKj000000Xizb</developerName>
+        <genAiPluginInstructions>
+            <description>PREREQUISITE: Before updating a storefront, you need its storefrontId and accountId. Get these by searching for the storefront by name first using Get_Storefronts_By_Name.</description>
+            <developerName>instruction_1</developerName>
+            <language xsi:nil="true"/>
+            <masterLabel>Instruction 1</masterLabel>
+            <sortOrder>0</sortOrder>
+        </genAiPluginInstructions>
+        <genAiPluginInstructions>
+            <description>USING IDs: When you search for a storefront, the result includes both storefrontId and accountId. Use BOTH of these values when calling Update_Storefront_Details or Update_Storefront_Hours. Do NOT ask the user for these IDs.</description>
+            <developerName>instruction_2</developerName>
+            <language xsi:nil="true"/>
+            <masterLabel>Instruction 2</masterLabel>
+            <sortOrder>1</sortOrder>
+        </genAiPluginInstructions>
+        <genAiPluginInstructions>
+            <description>UPDATE DETAILS: You can update description, phone number, status, and overview. Only update the fields the merchant mentions - leave others unchanged.</description>
+            <developerName>instruction_3</developerName>
+            <language xsi:nil="true"/>
+            <masterLabel>Instruction 3</masterLabel>
+            <sortOrder>2</sortOrder>
+        </genAiPluginInstructions>
+        <genAiPluginInstructions>
+            <description>UPDATE HOURS: Specify the day of week (Monday, Tuesday, etc.), opening time (HH:MM format like 09:00), closing time, and optional notes. Update one day at a time.</description>
+            <developerName>instruction_4</developerName>
+            <language xsi:nil="true"/>
+            <masterLabel>Instruction 4</masterLabel>
+            <sortOrder>3</sortOrder>
+        </genAiPluginInstructions>
+        <genAiPluginInstructions>
+            <description>CONFIRMATION: Before making any update, summarize what you&apos;re about to change and ask &quot;Should I proceed with this update?&quot; Wait for confirmation.</description>
+            <developerName>instruction_5</developerName>
+            <language xsi:nil="true"/>
+            <masterLabel>Instruction 5</masterLabel>
+            <sortOrder>4</sortOrder>
+        </genAiPluginInstructions>
+        <genAiPluginInstructions>
+            <description>ACCESS DENIED: If you get &quot;Access denied&quot; error, it means the storefront doesn&apos;t belong to the merchant&apos;s account. Do not retry - inform the user they don&apos;t have permission to modify this storefront.</description>
+            <developerName>instruction_6</developerName>
+            <language xsi:nil="true"/>
+            <masterLabel>Instruction 6</masterLabel>
+            <sortOrder>5</sortOrder>
+        </genAiPluginInstructions>
+        <genAiPluginInstructions>
+            <description>IDENTITY FIRST: If you do not already have the merchant&apos;s accountId, you MUST identify the merchant before listing/searching/updating storefronts. Ask for the merchant&apos;s email address and call Get_Customer_Profile to get accountId. Use that accountId for all subsequent actions and ONLY operate on storefronts that match that accountId. Do NOT ask the user for Salesforce IDs.</description>
+            <developerName>instruction_identity</developerName>
+            <language xsi:nil="true"/>
+            <masterLabel>Identity First</masterLabel>
+            <sortOrder>6</sortOrder>
+        </genAiPluginInstructions>
+        <genAiPluginInstructions>
+            <description>LIST STOREFRONTS (USE BY ACCOUNT): If the user asks to see all their storefronts using phrasing like &quot;show me my storefronts&quot;, &quot;show me all of mine&quot;, &quot;list them&quot;, &quot;display them&quot;, or similar, AND you have the merchant&apos;s accountId (from Get_Customer_Profile), you MUST call Get_Storefronts_By_Account and display the storefront names. Do NOT ask the user for a storefront name in this case. Do NOT call Get_Storefronts_By_Name for this use-case.</description>
+            <developerName>instruction_list_storefronts</developerName>
+            <language xsi:nil="true"/>
+            <masterLabel>List Storefronts</masterLabel>
+            <sortOrder>7</sortOrder>
+        </genAiPluginInstructions>
+        <genAiPluginInstructions>
+            <description>SEARCH STOREFRONTS (BY NAME ONLY WHEN USER PROVIDED A NAME): Only call Get_Storefronts_By_Name when the USER explicitly provides a storefront name/partial name to search for (e.g., &quot;Urban&quot;). Never use the merchant&apos;s firstName/lastName (e.g., &quot;Maria&quot;) as storefrontName.</description>
+            <developerName>instruction_search_by_name_only</developerName>
+            <language xsi:nil="true"/>
+            <masterLabel>Search By Name Only</masterLabel>
+            <sortOrder>8</sortOrder>
+        </genAiPluginInstructions>
+        <language>en_US</language>
+        <localActionLinks>
+            <functionName>Update_Storefront_Hours_179Kj000000LakZ</functionName>
+        </localActionLinks>
+        <localActionLinks>
+            <functionName>Update_Storefront_Details_179Kj000000LakZ</functionName>
+        </localActionLinks>
+        <localActionLinks>
+            <functionName>Get_Storefronts_By_Name_179Kj000000Lako</functionName>
+        </localActionLinks>
+        <localActionLinks>
+            <functionName>Get_Storefronts_By_Account_179Kj000000Lako</functionName>
+        </localActionLinks>
+        <localActions>
+            <fullName>Update_Storefront_Details_179Kj000000LakZ</fullName>
+            <description>Updates non-sensitive storefront fields such as description, phone, status, and overview.</description>
+            <developerName>Update_Storefront_Details_179Kj000000LakZ</developerName>
+            <invocationTarget>AgentUpdateStorefrontDetailsActions</invocationTarget>
+            <invocationTargetType>apex</invocationTargetType>
+            <isConfirmationRequired>true</isConfirmationRequired>
+            <isIncludeInProgressIndicator>false</isIncludeInProgressIndicator>
+            <localDeveloperName>Update_Storefront_Details</localDeveloperName>
+            <masterLabel>Update Storefront Details</masterLabel>
+            <source>Update_Storefront_Details</source>
+        </localActions>
+        <localActions>
+            <fullName>Update_Storefront_Hours_179Kj000000LakZ</fullName>
+            <description>Updates or creates operating hours for a storefront on a specific day of the week.</description>
+            <developerName>Update_Storefront_Hours_179Kj000000LakZ</developerName>
+            <invocationTarget>AgentUpdateStorefrontHoursActions</invocationTarget>
+            <invocationTargetType>apex</invocationTargetType>
+            <isConfirmationRequired>true</isConfirmationRequired>
+            <isIncludeInProgressIndicator>false</isIncludeInProgressIndicator>
+            <localDeveloperName>Update_Storefront_Hours</localDeveloperName>
+            <masterLabel>Update Storefront Hours</masterLabel>
+            <source>Update_Storefront_Hours</source>
+        </localActions>
+        <localActions>
+            <fullName>Get_Storefronts_By_Account_179Kj000000Lako</fullName>
+            <description>Lists storefronts for a given Account Id and returns results as Apex-defined DTOs for reliable serialization.</description>
+            <developerName>Get_Storefronts_By_Account_179Kj000000Lako</developerName>
+            <invocationTarget>AgentGetStorefrontsByAccountActions</invocationTarget>
+            <invocationTargetType>apex</invocationTargetType>
+            <isConfirmationRequired>false</isConfirmationRequired>
+            <isIncludeInProgressIndicator>false</isIncludeInProgressIndicator>
+            <localDeveloperName>Get_Storefronts_By_Account</localDeveloperName>
+            <masterLabel>Get Storefronts By Account</masterLabel>
+            <source>Get_Storefronts_By_Account</source>
+        </localActions>
+        <localActions>
+            <fullName>Get_Storefronts_By_Name_179Kj000000Lako</fullName>
+            <description>Query Storefront__c by Name (contains) and return results as Apex-defined DTOs for reliable serialization.</description>
+            <developerName>Get_Storefronts_By_Name_179Kj000000Lako</developerName>
+            <invocationTarget>AgentStorefrontActions</invocationTarget>
+            <invocationTargetType>apex</invocationTargetType>
+            <isConfirmationRequired>false</isConfirmationRequired>
+            <isIncludeInProgressIndicator>false</isIncludeInProgressIndicator>
+            <localDeveloperName>Get_Storefronts_By_Name</localDeveloperName>
+            <masterLabel>Get Storefronts By Name</masterLabel>
+            <source>Get_Storefronts_By_Name</source>
+        </localActions>
+        <localDeveloperName>Storefront_Management</localDeveloperName>
+        <masterLabel>Storefront Management</masterLabel>
+        <pluginType>Topic</pluginType>
+        <scope>I update storefront details (description, phone, status) and hours of operation. I always search for the storefront first to get the required IDs, then use those IDs automatically. I never ask users for Salesforce IDs.</scope>
+        <source>Storefront_Management</source>
+    </localTopics>
+    <localTopics>
+        <fullName>Reviews_Management_16jKj000000Xizb</fullName>
+        <canEscalate>false</canEscalate>
+        <description>View and analyze customer reviews and ratings.</description>
+        <developerName>Reviews_Management_16jKj000000Xizb</developerName>
+        <genAiPluginInstructions>
+            <description>IDENTITY FIRST: If you do not already have the merchant&apos;s accountId, ask for their email and call Get_Customer_Profile to get accountId before summarizing reviews. Use that accountId for all actions. Do NOT ask the user for Salesforce IDs.</description>
+            <developerName>instruction_identity</developerName>
+            <language xsi:nil="true"/>
+            <masterLabel>Identity First</masterLabel>
+            <sortOrder>0</sortOrder>
+        </genAiPluginInstructions>
+        <genAiPluginInstructions>
+            <description>PREREQUISITE: You need the storefrontId and accountId from a storefront search before viewing reviews for that storefront.</description>
+            <developerName>instruction_1</developerName>
+            <language xsi:nil="true"/>
+            <masterLabel>Instruction 1</masterLabel>
+            <sortOrder>1</sortOrder>
+        </genAiPluginInstructions>
+        <genAiPluginInstructions>
+            <description>DEFAULT TIMEFRAME: If not specified, retrieve reviews from the last 30 days. If user asks for &quot;recent&quot; reviews, use 7 days. Accept custom timeframes like &quot;last 2 weeks&quot; (14 days).</description>
+            <developerName>instruction_2</developerName>
+            <language xsi:nil="true"/>
+            <masterLabel>Instruction 2</masterLabel>
+            <sortOrder>2</sortOrder>
+        </genAiPluginInstructions>
+        <genAiPluginInstructions>
+            <description>PRESENT SUMMARY: Always start with the average rating and total count: &quot;[Storefront] has an average rating of [X] stars from [N] reviews in the last [days] days.&quot;</description>
+            <developerName>instruction_3</developerName>
+            <language xsi:nil="true"/>
+            <masterLabel>Instruction 3</masterLabel>
+            <sortOrder>3</sortOrder>
+        </genAiPluginInstructions>
+        <genAiPluginInstructions>
+            <description>RATING BREAKDOWN: Show the distribution: &quot;5-star: [N], 4-star: [N], 3-star: [N], 2-star: [N], 1-star: [N]&quot;. Highlight if there&apos;s a trend (e.g., &quot;Most reviews are positive with [X] 5-star ratings&quot;).</description>
+            <developerName>instruction_4</developerName>
+            <language xsi:nil="true"/>
+            <masterLabel>Instruction 4</masterLabel>
+            <sortOrder>4</sortOrder>
+        </genAiPluginInstructions>
+        <genAiPluginInstructions>
+            <description>ANALYZE COMMENTS: Read through the review comments and identify common themes. What do customers praise? What do they complain about? Summarize in 2-3 bullet points.</description>
+            <developerName>instruction_5</developerName>
+            <language xsi:nil="true"/>
+            <masterLabel>Instruction 5</masterLabel>
+            <sortOrder>5</sortOrder>
+        </genAiPluginInstructions>
+        <genAiPluginInstructions>
+            <description>ACTIONABLE INSIGHTS: End with 1-2 recommendations based on the reviews. For example: &quot;Consider addressing wait times during lunch hours&quot; or &quot;Customers love your desserts - consider promoting them more.&quot;</description>
+            <developerName>instruction_6</developerName>
+            <language xsi:nil="true"/>
+            <masterLabel>Instruction 6</masterLabel>
+            <sortOrder>6</sortOrder>
+        </genAiPluginInstructions>
+        <genAiPluginInstructions>
+            <description>NO REVIEWS: If there are no reviews in the timeframe, say &quot;No reviews found in the last [X] days. Would you like me to check a longer timeframe?&quot;</description>
+            <developerName>instruction_7</developerName>
+            <language xsi:nil="true"/>
+            <masterLabel>Instruction 7</masterLabel>
+            <sortOrder>7</sortOrder>
+        </genAiPluginInstructions>
+        <language>en_US</language>
+        <localActionLinks>
+            <functionName>Summarize_Reviews_179Kj000000LakA</functionName>
+        </localActionLinks>
+        <localActions>
+            <fullName>Summarize_Reviews_179Kj000000LakA</fullName>
+            <description>Retrieves recent reviews for a storefront and provides summary statistics for AI-powered insights.</description>
+            <developerName>Summarize_Reviews_179Kj000000LakA</developerName>
+            <invocationTarget>AgentSummarizeReviewsActions</invocationTarget>
+            <invocationTargetType>apex</invocationTargetType>
+            <isConfirmationRequired>false</isConfirmationRequired>
+            <isIncludeInProgressIndicator>false</isIncludeInProgressIndicator>
+            <localDeveloperName>Summarize_Reviews</localDeveloperName>
+            <masterLabel>Summarize Reviews</masterLabel>
+            <source>Summarize_Reviews</source>
+        </localActions>
+        <localDeveloperName>Reviews_Management</localDeveloperName>
+        <masterLabel>Reviews Management</masterLabel>
+        <pluginType>Topic</pluginType>
+        <scope>I analyze customer reviews and provide insights. I show rating summaries, identify trends in feedback, and give actionable recommendations to help improve the business.</scope>
+        <source>Reviews_Management</source>
+    </localTopics>
+    <masterLabel>Merchant Support Agent</masterLabel>
+    <plannerActions>
+        <fullName>AnswerQuestionsWithKnowledge_16jKj000000Xizb</fullName>
+        <description>Answers questions about company policies and procedures, troubleshooting steps, or product information. For example: &quot;What is your return policy?&quot; &quot;How do I fix an issue?&quot; or &quot;What features does a product have?&quot;</description>
+        <developerName>AnswerQuestionsWithKnowledge_16jKj000000Xizb</developerName>
+        <invocationTarget>streamKnowledgeSearch</invocationTarget>
+        <invocationTargetType>standardInvocableAction</invocationTargetType>
+        <isConfirmationRequired>false</isConfirmationRequired>
+        <isIncludeInProgressIndicator>true</isIncludeInProgressIndicator>
+        <localDeveloperName>AnswerQuestionsWithKnowledge</localDeveloperName>
+        <masterLabel>Answer Questions with Knowledge</masterLabel>
+        <progressIndicatorMessage>Getting answers</progressIndicatorMessage>
+        <source>EmployeeCopilot__AnswerQuestionsWithKnowledge</source>
+    </plannerActions>
+    <plannerSurfaces>
+        <adaptiveResponseAllowed>true</adaptiveResponseAllowed>
+        <callRecordingAllowed>false</callRecordingAllowed>
+        <surface>SurfaceAction__Messaging</surface>
+        <surfaceType>Messaging</surfaceType>
+    </plannerSurfaces>
+    <plannerType>AiCopilot__ReAct</plannerType>
+</GenAiPlannerBundle>

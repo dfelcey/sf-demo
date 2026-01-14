@@ -1,0 +1,22 @@
+{
+  "required" : [ "accountId", "storefrontId" ],
+  "unevaluatedProperties" : false,
+  "properties" : {
+    "accountId" : {
+      "title" : "Account Id",
+      "description" : "The Account Id that owns the storefront. Required for security validation.",
+      "lightning:type" : "lightning__recordIdType",
+      "lightning:isPII" : false,
+      "copilotAction:isUserInput" : false
+    },
+    "storefrontId" : {
+      "title" : "Storefront Id",
+      "description" : "The Storefront__c record Id to retrieve menus for.",
+      "lightning:type" : "lightning__recordIdType",
+      "lightning:isPII" : false,
+      "copilotAction:isUserInput" : false
+    }
+  },
+  "lightning:type" : "lightning__objectType",
+  "lightning:textIndexed" : true
+}

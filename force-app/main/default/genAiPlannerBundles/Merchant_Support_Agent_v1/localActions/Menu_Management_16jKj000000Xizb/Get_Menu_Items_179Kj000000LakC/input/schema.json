@@ -1,0 +1,29 @@
+{
+  "required" : [ "accountId" ],
+  "unevaluatedProperties" : false,
+  "properties" : {
+    "accountId" : {
+      "title" : "Account Id",
+      "description" : "The Account Id that owns the storefront. Required for security validation.",
+      "lightning:type" : "lightning__textType",
+      "lightning:isPII" : false,
+      "copilotAction:isUserInput" : false
+    },
+    "menuId" : {
+      "title" : "Menu Id",
+      "description" : "The Menu__c record Id to retrieve items for. If provided, storefrontId is ignored.",
+      "lightning:type" : "lightning__textType",
+      "lightning:isPII" : false,
+      "copilotAction:isUserInput" : false
+    },
+    "storefrontId" : {
+      "title" : "Storefront Id",
+      "description" : "The Storefront__c record Id to retrieve all menu items for (across all menus). Used only if menuId is not provided.",
+      "lightning:type" : "lightning__textType",
+      "lightning:isPII" : false,
+      "copilotAction:isUserInput" : false
+    }
+  },
+  "lightning:type" : "lightning__objectType",
+  "lightning:textIndexed" : true
+}

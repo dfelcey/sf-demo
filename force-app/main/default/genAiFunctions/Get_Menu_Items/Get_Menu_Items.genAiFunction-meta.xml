@@ -1,8 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <GenAiFunction xmlns="http://soap.sforce.com/2006/04/metadata">
     <description>Retrieves menu items for a selected menu or all items for a storefront.</description>
+    <developerName>Get_Menu_Items</developerName>
     <invocationTarget>AgentGetMenuItemsActions</invocationTarget>
     <invocationTargetType>apex</invocationTargetType>
     <isConfirmationRequired>false</isConfirmationRequired>
+    <isIncludeInProgressIndicator>false</isIncludeInProgressIndicator>
+    <localDeveloperName>Get_Menu_Items</localDeveloperName>
     <masterLabel>Get Menu Items</masterLabel>
 </GenAiFunction>

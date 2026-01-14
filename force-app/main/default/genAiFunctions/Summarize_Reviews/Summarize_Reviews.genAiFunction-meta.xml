@@ -1,8 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <GenAiFunction xmlns="http://soap.sforce.com/2006/04/metadata">
     <description>Retrieves recent reviews for a storefront and provides summary statistics for AI-powered insights.</description>
+    <developerName>Summarize_Reviews</developerName>
     <invocationTarget>AgentSummarizeReviewsActions</invocationTarget>
     <invocationTargetType>apex</invocationTargetType>
     <isConfirmationRequired>false</isConfirmationRequired>
+    <isIncludeInProgressIndicator>false</isIncludeInProgressIndicator>
+    <localDeveloperName>Summarize_Reviews</localDeveloperName>
     <masterLabel>Summarize Reviews</masterLabel>
 </GenAiFunction>

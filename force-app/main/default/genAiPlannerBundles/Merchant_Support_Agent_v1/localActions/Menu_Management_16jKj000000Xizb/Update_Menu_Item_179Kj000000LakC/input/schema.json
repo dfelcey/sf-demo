@@ -1,0 +1,51 @@
+{
+  "required" : [ "accountId", "menuItemId" ],
+  "unevaluatedProperties" : false,
+  "properties" : {
+    "accountId" : {
+      "title" : "Account Id",
+      "description" : "The Account Id that owns the storefront. Required for security validation.",
+      "lightning:type" : "lightning__textType",
+      "lightning:isPII" : false,
+      "copilotAction:isUserInput" : false
+    },
+    "menuItemId" : {
+      "title" : "Menu Item Id",
+      "description" : "The Menu_Item__c record Id to update.",
+      "lightning:type" : "lightning__textType",
+      "lightning:isPII" : false,
+      "copilotAction:isUserInput" : false
+    },
+    "description" : {
+      "title" : "Description",
+      "description" : "New description for the menu item. Leave blank to skip.",
+      "lightning:type" : "lightning__textType",
+      "lightning:isPII" : false,
+      "copilotAction:isUserInput" : false
+    },
+    "available" : {
+      "title" : "Available",
+      "description" : "Set availability status. Leave null to skip.",
+      "lightning:type" : "lightning__booleanType",
+      "lightning:isPII" : false,
+      "copilotAction:isUserInput" : false
+    },
+    "calories" : {
+      "title" : "Calories",
+      "description" : "New calorie count. Leave null to skip.",
+      "multipleOf" : 1.0E-34,
+      "lightning:type" : "lightning__numberType",
+      "lightning:isPII" : false,
+      "copilotAction:isUserInput" : false
+    },
+    "imageUrl" : {
+      "title" : "Image URL",
+      "description" : "New image URL for the menu item. Leave blank to skip.",
+      "lightning:type" : "lightning__textType",
+      "lightning:isPII" : false,
+      "copilotAction:isUserInput" : false
+    }
+  },
+  "lightning:type" : "lightning__objectType",
+  "lightning:textIndexed" : true
+}
