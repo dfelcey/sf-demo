@@ -95,6 +95,8 @@ echo "04tXXXXXXXXXXXXXXX" > .package-version
 ```
 
 This script retrieves:
+- **Agents** (complete Agentforce agent configurations - includes Bot, BotVersion, Planner, Plugins, Functions)
+- **Bot and BotVersion** (individual agent components)
 - **GenAI Functions** (actions that can be added to agents)
 - **GenAI Plugins** (topics/categories of actions)
 - **GenAI Planner Bundles** (agent planner configurations)

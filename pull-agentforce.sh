@@ -36,13 +36,18 @@ Usage: $0 [OPTIONS]
 Pull Agentforce agent assets, external services, and named credentials from a Salesforce org.
 
 This script retrieves:
-  - Einstein Agent Configurations (Agentforce agents)
+  - Agentforce Agents (complete agent configurations)
+  - Bot and BotVersion (agent components)
+  - GenAI Functions (actions that can be added to agents)
+  - GenAI Plugins (topics/categories of actions)
+  - GenAI Planner Bundles (agent planner configurations)
   - External Service Registrations
   - Named Credentials
   - External Credentials
   - Connected Apps
   - Custom Metadata Types
-  - Agent-related Custom Objects
+  - Apex Classes (invocable actions)
+  - Flows (including flow actions)
 
 Options:
   -a, --alias ALIAS          Org alias (required)

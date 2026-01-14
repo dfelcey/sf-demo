@@ -6,9 +6,11 @@
 # Agent configurations may be stored in Custom Objects or Custom Metadata
 #
 # This project includes the following Agentforce assets:
+# - Agents (complete agent configurations including Bot, BotVersion, Planner, Plugins, Functions)
 # - GenAI Functions (actions that can be added to agents)
 # - GenAI Plugins (topics/categories of actions)
 # - GenAI Planner Bundles (agent planner configurations)
+# - Bot and BotVersion (individual agent components)
 # - Flows (including flow actions)
 # - External Services and Credentials
 
@@ -63,6 +65,17 @@ GenAiPlugin
 
 # Agentforce Planner (GenAI Planner Bundle - contains all topics and actions)
 GenAiPlannerBundle
+*
+
+# Agentforce Agents (pseudo metadata type that includes Bot, BotVersion, GenAiPlannerBundle, GenAiPlugin, GenAiFunction)
+# This retrieves all agents and their complete metadata
+Agent
+*
+
+# Bot and BotVersion (individual components of agents - included in Agent but can be pulled separately)
+Bot
+*
+BotVersion
 *
 
 # Flows (only flows used by Agentforce agents)
