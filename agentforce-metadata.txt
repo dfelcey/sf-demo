@@ -77,10 +77,11 @@ Bot
 BotVersion
 *
 
-# Permission Sets (may grant access to agents/bots)
-# Note: This will pull ALL permission sets - filter as needed
+# Permission Sets (agent-related permission sets assigned to current user)
+# Note: This will be dynamically populated with permission sets assigned to the current user
+# that have agent/bot-related permissions
 PermissionSet
-*
+# Will be populated dynamically by pull-agentforce.sh
 
 # Profiles (may grant access to agents/bots via profile settings)
 # Note: This will pull ALL profiles - filter as needed

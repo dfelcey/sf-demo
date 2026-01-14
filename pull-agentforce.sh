@@ -157,6 +157,106 @@ if [ -z "$ORG_ALIAS" ]; then
     exit 1
 fi
 
+# Query permission sets assigned to current user that are related to agents
+log_info "Querying permission sets assigned to current user..."
+
+# Get current user info
+ORG_INFO=$(sf org display --target-org "$ORG_ALIAS" --json 2>/dev/null || echo '{}')
+CURRENT_USERNAME=$(echo "$ORG_INFO" | jq -r '.result.username // ""' 2>/dev/null || echo "")
+
+if [ -n "$CURRENT_USERNAME" ]; then
+    log_info "Current user: $CURRENT_USERNAME"
+    
+    # Query permission sets assigned to current user
+    # Using SOQL to get permission sets assigned to the current user
+    PERMISSION_SETS_QUERY="SELECT PermissionSet.Name, PermissionSet.Label FROM PermissionSetAssignment WHERE Assignee.Username = '$CURRENT_USERNAME'"
+    
+    log_info "Finding permission sets assigned to current user..."
+    PERMISSION_SETS_JSON=$(sf data query --query "$PERMISSION_SETS_QUERY" --target-org "$ORG_ALIAS" --json 2>/dev/null || echo '{"result":{"records":[]}}')
+    
+    PERMISSION_SET_NAMES=$(echo "$PERMISSION_SETS_JSON" | jq -r '.result.records[]?.PermissionSet?.Name // empty' 2>/dev/null | grep -v '^$' || echo "")
+    
+    if [ -n "$PERMISSION_SET_NAMES" ]; then
+        log_info "Found permission sets assigned to current user:"
+        echo "$PERMISSION_SET_NAMES" | while read -r ps_name; do
+            if [ -n "$ps_name" ]; then
+                echo "  • $ps_name"
+            fi
+        done
+        
+        # Include all permission sets assigned to the user
+        # (They may have agent-related permissions)
+        log_info "Including all permission sets assigned to current user..."
+        AGENT_RELATED_PS="$PERMISSION_SET_NAMES"
+        
+        if [ -n "$AGENT_RELATED_PS" ]; then
+            log_success "Found permission sets assigned to current user"
+            
+            # Create temporary metadata file with filtered permission sets
+            TEMP_METADATA_FILE=$(mktemp)
+            
+            # Replace PermissionSet section with actual permission set names
+            # Find the line with "PermissionSet" and replace until the comment line
+            {
+                # Print everything before PermissionSet
+                sed '/^PermissionSet$/,$d' "$METADATA_FILE"
+                # Add PermissionSet header
+                echo "PermissionSet"
+                # Add each permission set name
+                echo "$AGENT_RELATED_PS" | grep -v '^$' | while read -r ps_name; do
+                    if [ -n "$ps_name" ]; then
+                        echo "$ps_name"
+                    fi
+                done
+                # Print everything after the comment line (skip the comment itself)
+                sed -n '/^# Will be populated dynamically/,$p' "$METADATA_FILE" | tail -n +2
+            } > "$TEMP_METADATA_FILE" 2>/dev/null || {
+                # Fallback: use awk for more reliable replacement
+                awk -v ps_list="$AGENT_RELATED_PS" '
+                BEGIN {
+                    split(ps_list, ps_array, "\n")
+                }
+                /^PermissionSet$/ {
+                    print
+                    for (i in ps_array) {
+                        if (ps_array[i] != "") {
+                            print ps_array[i]
+                        }
+                    }
+                    skip_until_comment = 1
+                    next
+                }
+                skip_until_comment && /^# Will be populated dynamically/ {
+                    skip_until_comment = 0
+                    next
+                }
+                skip_until_comment {
+                    next
+                }
+                { print }
+                ' "$METADATA_FILE" > "$TEMP_METADATA_FILE" 2>/dev/null || cp "$METADATA_FILE" "$TEMP_METADATA_FILE"
+            }
+            
+            METADATA_FILE="$TEMP_METADATA_FILE"
+            log_info "Using permission sets assigned to current user in temporary metadata file"
+        else
+            log_warn "No permission sets found assigned to current user"
+            # Remove PermissionSet section from metadata file
+            TEMP_METADATA_FILE=$(mktemp)
+            awk '/^PermissionSet$/,/^# Will be populated dynamically/ { if (/^PermissionSet$/ || /^# Will be populated dynamically/) next; next } { print }' "$METADATA_FILE" > "$TEMP_METADATA_FILE" 2>/dev/null || cp "$METADATA_FILE" "$TEMP_METADATA_FILE"
+            METADATA_FILE="$TEMP_METADATA_FILE"
+        fi
+    else
+        log_warn "No permission sets found assigned to current user"
+        # Remove PermissionSet section from metadata file
+        TEMP_METADATA_FILE=$(mktemp)
+        awk '/^PermissionSet$/,/^# Will be populated dynamically/ { if (/^PermissionSet$/ || /^# Will be populated dynamically/) next; next } { print }' "$METADATA_FILE" > "$TEMP_METADATA_FILE" 2>/dev/null || cp "$METADATA_FILE" "$TEMP_METADATA_FILE"
+        METADATA_FILE="$TEMP_METADATA_FILE"
+    fi
+else
+    log_warn "Could not determine current user, skipping permission set filtering"
+fi
+
 # Build command
 CMD="./pull-assets.sh -a $ORG_ALIAS -f $METADATA_FILE -o $OUTPUT_DIR"
 
@@ -172,6 +272,11 @@ $CMD
 
 EXIT_CODE=$?
 
+# Clean up temporary metadata file if created
+if [ -n "$TEMP_METADATA_FILE" ] && [ -f "$TEMP_METADATA_FILE" ]; then
+    rm -f "$TEMP_METADATA_FILE"
+fi
+
 if [ $EXIT_CODE -eq 0 ]; then
     echo ""
     log_success "Agentforce assets retrieved successfully!"
@@ -184,6 +289,7 @@ if [ $EXIT_CODE -eq 0 ]; then
     echo "  • GenAI Planner Bundles: $OUTPUT_DIR/main/default/genAiPlannerBundles/"
     echo "  • GenAI Functions: $OUTPUT_DIR/main/default/genAiFunctions/"
     echo "  • GenAI Plugins: $OUTPUT_DIR/main/default/genAiPlugins/"
+    echo "  • Permission Sets: $OUTPUT_DIR/main/default/permissionsets/"
     echo "  • External Services: $OUTPUT_DIR/main/default/externalServiceRegistrations/"
     echo "  • Named Credentials: $OUTPUT_DIR/main/default/namedCredentials/"
     echo "  • External Credentials: $OUTPUT_DIR/main/default/externalCredentials/"
