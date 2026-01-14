@@ -10,8 +10,7 @@
 # - GenAI Functions (actions that can be added to agents)
 # - GenAI Plugins (topics/categories of actions)
 # - GenAI Planner Bundles (agent planner configurations)
-# - Permission Sets (user access to agents/bots)
-# - Profiles (user access to agents/bots)
+# - Permission Sets (user access to agents/bots - only those assigned to current user)
 # - Flows (including flow actions)
 # - External Services and Credentials
 
