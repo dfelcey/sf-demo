@@ -108,13 +108,23 @@ check_cli() {
     if ! command -v sf &> /dev/null; then
         log_error "Salesforce CLI (sf) is not installed!"
         echo ""
-        echo "Please install it:"
-        echo "  npm install -g @salesforce/cli"
+        echo "Please install the latest version:"
+        echo "  npm install -g @salesforce/cli@latest"
         echo ""
         echo "Or visit: https://developer.salesforce.com/tools/salesforcecli"
         exit 1
     fi
-    log_debug "Salesforce CLI found: $(sf --version)"
+    
+    SF_VERSION=$(sf --version 2>&1)
+    log_debug "Salesforce CLI found: $SF_VERSION"
+    
+    # Suggest updating if CLI is very old (optional check)
+    if [ "$VERBOSE" = true ]; then
+        echo ""
+        echo "💡 Tip: Ensure you're using the latest CLI for best compatibility with API v64+"
+        echo "   Update with: npm install -g @salesforce/cli@latest"
+        echo "   Or use: sf update"
+    fi
 }
 
 # List available orgs
@@ -314,7 +324,7 @@ EOF
     done
     
     cat >> "$TEMP_MANIFEST" << EOF
-    <version>60.0</version>
+    <version>64.0</version>
 </Package>
 EOF
     
@@ -451,7 +461,7 @@ EOF
     fi
     
     cat >> "$TEMP_MANIFEST" << EOF
-    <version>60.0</version>
+    <version>64.0</version>
 </Package>
 EOF
     

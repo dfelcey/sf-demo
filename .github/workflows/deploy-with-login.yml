@@ -55,11 +55,12 @@ jobs:
             fi
             
             echo ""
-            echo "[$(date '+%Y-%m-%d %H:%M:%S')] Installing Salesforce CLI via npm..."
+            echo "[$(date '+%Y-%m-%d %H:%M:%S')] Installing latest Salesforce CLI via npm..."
             echo "npm prefix: $(npm config get prefix)"
             echo "npm cache: $(npm config get cache)"
             
-            npm install -g @salesforce/cli || {
+            # Install latest Salesforce CLI
+            npm install -g @salesforce/cli@latest || {
               echo "[$(date '+%Y-%m-%d %H:%M:%S')] ❌ Failed to install Salesforce CLI"
               echo "[$(date '+%Y-%m-%d %H:%M:%S')] Trying alternative installation method..."
               # Alternative: use npm with --force or try different approach

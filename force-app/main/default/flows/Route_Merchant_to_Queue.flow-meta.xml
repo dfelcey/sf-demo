@@ -82,7 +82,7 @@
         </inputParameters>
         <nameSegment>routeWork</nameSegment>
     </actionCalls>
-    <apiVersion>63.0</apiVersion>
+    <apiVersion>64.0</apiVersion>
     <environments>Default</environments>
     <interviewLabel>Route Merchant to Queue {!$Flow.CurrentDateTime}</interviewLabel>
     <label>Route Merchant to Queue</label>
