@@ -84,6 +84,34 @@ This script retrieves:
 - **Custom Metadata Types**
 - **Apex Classes** (including invocable actions)
 
+### Create a Package
+
+**Package all Agentforce assets for distribution:**
+
+```bash
+# Create an unlocked package (recommended for most use cases)
+./create-package.sh -a devhub-org
+
+# Create a managed package
+./create-package.sh -a devhub-org -t Managed
+
+# Create package with custom name and version
+./create-package.sh -a devhub-org -n "My Agentforce Package" -v 2.0.0
+
+# See all options
+./create-package.sh --help
+```
+
+**Packageable Assets:**
+- ✅ GenAI Functions, Plugins, and Planner Bundles
+- ✅ Apex Classes (invocable actions)
+- ✅ Flows
+- ✅ External Service Registrations
+- ✅ Named Credentials and External Credentials (metadata only, credentials must be configured separately)
+- ✅ Connected Apps (metadata only)
+
+**Note:** Named Credentials and External Credentials can be packaged, but the actual credential values (tokens, keys) are not included in the package. They must be configured separately in each org after installation.
+
 ## How It Works
 
 ### Local Deployment (`deploy-local.sh`)
@@ -129,6 +157,7 @@ sf-demo/
 ├── trigger-deploy.sh                 # GitHub Actions trigger script
 ├── pull-agentforce.sh                # Retrieve Agentforce assets from org
 ├── pull-assets.sh                    # General metadata retrieval script
+├── create-package.sh                 # Create Salesforce package with assets
 ├── agentforce-metadata.txt           # Agentforce metadata reference
 └── .packages                         # Package IDs for installation (optional)
 ```
@@ -139,6 +168,7 @@ sf-demo/
 - **`trigger-deploy.sh`** - Triggers GitHub Actions deployment workflow
 - **`pull-agentforce.sh`** - Convenience script to retrieve Agentforce assets from an org
 - **`pull-assets.sh`** - General-purpose script to retrieve metadata from Salesforce orgs
+- **`create-package.sh`** - Create Salesforce package (unlocked or managed) with all assets
 - **`agentforce-metadata.txt`** - Metadata configuration file for Agentforce assets
 - **`.packages`** - Optional file listing package IDs to install before deployment
 
