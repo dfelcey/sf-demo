@@ -388,6 +388,15 @@ EOF
     CURRENT_TYPE=""
     MEMBERS=()
     
+    # List of known Salesforce metadata types (to avoid treating class names as types)
+    # Common metadata types that might appear in the file
+    KNOWN_TYPES=("CustomObject" "CustomField" "ApexClass" "ApexTrigger" "Profile" "PermissionSet" 
+                 "Flow" "LightningComponentBundle" "CustomTab" "CustomApplication" "ApexPage"
+                 "ApexComponent" "StaticResource" "EmailTemplate" "Document" "Report" "Dashboard"
+                 "ExternalServiceRegistration" "NamedCredential" "ExternalCredential" "ConnectedApp"
+                 "CustomMetadata" "LiveChatAgentConfig" "GenAiFunction" "GenAiPlugin" "GenAiPlannerBundle"
+                 "Workflow" "ValidationRule" "CustomLabel" "RemoteSiteSetting" "CorsWhitelistOrigin")
+    
     while IFS= read -r line || [ -n "$line" ]; do
         # Skip comments and empty lines
         line=$(echo "$line" | xargs)
@@ -395,8 +404,18 @@ EOF
             continue
         fi
         
-        # Check if line is a metadata type (starts with uppercase, no dots)
-        if [[ "$line" =~ ^[A-Z][a-zA-Z]*$ ]] && [[ ! "$line" =~ \. ]]; then
+        # Check if line is a known metadata type
+        IS_KNOWN_TYPE=false
+        for known_type in "${KNOWN_TYPES[@]}"; do
+            if [ "$line" = "$known_type" ]; then
+                IS_KNOWN_TYPE=true
+                break
+            fi
+        done
+        
+        # Only treat as metadata type if it's in our known types list
+        # This prevents class names and other members from being treated as types
+        if [[ "$IS_KNOWN_TYPE" = true ]]; then
             # Close previous type if exists
             if [ -n "$CURRENT_TYPE" ] && [ ${#MEMBERS[@]} -gt 0 ]; then
                 echo "    <types>" >> "$TEMP_MANIFEST"
