@@ -37,9 +37,21 @@ LiveChatAgentConfig
 *
 
 # Apex Classes (including invocable actions)
-# Use * to get all classes, or list specific class names
+# Only classes referenced by GenAI Functions - these are the dependencies
 ApexClass
-*
+CreateOpportunityInvocable
+AgentCreatePromotionActions
+AgentCustomerActions
+AgentGetActiveMenusActions
+AgentGetMenuItemsActions
+AgentGetStorefrontsByAccountActions
+AgentStorefrontActions
+AgentSummarizeReviewsActions
+AgentUpdateMenuItemActions
+AgentUpdateMenuItemPriceActions
+AgentUpdatePromotionStatusActions
+AgentUpdateStorefrontDetailsActions
+AgentUpdateStorefrontHoursActions
 
 # Agentforce Actions (GenAI Functions - actions that can be added to agents)
 GenAiFunction
