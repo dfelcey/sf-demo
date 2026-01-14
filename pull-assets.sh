@@ -442,7 +442,7 @@ EOF
                  "ApexComponent" "StaticResource" "EmailTemplate" "Document" "Report" "Dashboard"
                  "ExternalServiceRegistration" "NamedCredential" "ExternalCredential" "ConnectedApp"
                  "CustomMetadata" "LiveChatAgentConfig" "GenAiFunction" "GenAiPlugin" "GenAiPlannerBundle"
-                 "Agent" "Bot" "BotVersion" "Workflow" "ValidationRule" "CustomLabel" "RemoteSiteSetting" "CorsWhitelistOrigin")
+                 "Bot" "BotVersion" "Workflow" "ValidationRule" "CustomLabel" "RemoteSiteSetting" "CorsWhitelistOrigin")
     
     while IFS= read -r line || [ -n "$line" ]; do
         # Skip comments and empty lines
