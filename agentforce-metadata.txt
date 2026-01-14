@@ -65,6 +65,13 @@ GenAiPlugin
 GenAiPlannerBundle
 *
 
-# Flows (may contain flow actions used by agents)
+# Flows (only flows used by Agentforce agents)
 Flow
-*
+Add_Delivery_Instructions
+Issue_Refund
+Personalized_Recommendations
+Route_Merchant_to_Queue
+Route_to_Merchant_Support_Agent
+Send_Email_with_Verification_Code
+Update_Contact_Record
+Verify_Code
