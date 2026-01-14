@@ -108,6 +108,61 @@ This script retrieves:
 - **Custom Metadata Types**
 - **Apex Classes** (including invocable actions)
 
+### Working with Agent Script Files (Next Generation Agents)
+
+**Agent Script** is the foundation of Next Generation Agentforce agents. It combines natural language with programmatic expressions for handling business rules. Agent Script files (`.agent`) are stored in `AiAuthoringBundle` metadata components.
+
+#### Pulling Agent Script Files
+
+When you run `./pull-agentforce.sh`, Agent Script files are automatically retrieved to:
+```
+force-app/main/default/aiAuthoringBundles/<AgentName>/
+├── <AgentName>.agent          # Agent Script file
+└── <AgentName>.bundle-meta.xml # Bundle metadata
+```
+
+#### Deploying Agent Script Files
+
+1. **Deploy the metadata:**
+   ```bash
+   ./deploy-local.sh -a target-org
+   ```
+
+2. **Publish authoring bundles** (required to activate agents):
+   ```bash
+   # Publish all authoring bundles
+   sf agent publish --target-org target-org
+   
+   # Publish a specific agent
+   sf agent publish --agent-name Pronto_Service_Agent --target-org target-org
+   ```
+
+**Important:** After deploying Agent Script files, you must publish the authoring bundles to activate the agents. The deployment script will remind you of this step.
+
+#### Agent Script Workflow
+
+Based on [Salesforce Agentforce DX documentation](https://developer.salesforce.com/docs/ai/agentforce/guide/agent-dx-nga-author-agent.html):
+
+1. **Create or Retrieve** - Pull existing agents from your org or create new ones
+2. **Edit** - Modify Agent Script files (`.agent`) in VS Code with full syntax support
+3. **Deploy** - Deploy metadata using `./deploy-local.sh`
+4. **Publish** - Publish authoring bundles using `sf agent publish` to activate agents
+5. **Test** - Test agents in your Salesforce org
+
+#### Agent Script File Structure
+
+Each authoring bundle contains:
+- **`.agent` file** - The Agent Script source code defining agent behavior
+- **`.bundle-meta.xml`** - Metadata file with bundle type (`AGENT`)
+
+Example structure:
+```
+aiAuthoringBundles/
+└── Pronto_Service_Agent/
+    ├── Pronto_Service_Agent.agent
+    └── Pronto_Service_Agent.bundle-meta.xml
+```
+
 ### Create a Package
 
 **Package all Agentforce assets for distribution:**
@@ -127,14 +182,18 @@ This script retrieves:
 ```
 
 **Packageable Assets:**
+- ✅ AiAuthoringBundle (Agent Script files)
 - ✅ GenAI Functions, Plugins, and Planner Bundles
 - ✅ Apex Classes (invocable actions)
 - ✅ Flows
 - ✅ External Service Registrations
 - ✅ Named Credentials and External Credentials (metadata only, credentials must be configured separately)
 - ✅ Connected Apps (metadata only)
+- ✅ Bot and BotVersion (Legacy agents)
 
-**Note:** Named Credentials and External Credentials can be packaged, but the actual credential values (tokens, keys) are not included in the package. They must be configured separately in each org after installation.
+**Note:** 
+- Named Credentials and External Credentials can be packaged, but the actual credential values (tokens, keys) are not included in the package. They must be configured separately in each org after installation.
+- After installing a package containing Agent Script files, you must publish the authoring bundles using `sf agent publish --target-org <org-alias>` to activate the agents.
 
 ## How It Works
 
@@ -168,12 +227,20 @@ This script retrieves:
 ```
 sf-demo/
 ├── force-app/main/default/          # Salesforce metadata
+│   ├── aiAuthoringBundles/          # Agent Script files (Next Generation agents)
+│   │   └── <AgentName>/
+│   │       ├── <AgentName>.agent    # Agent Script source code
+│   │       └── <AgentName>.bundle-meta.xml
+│   ├── bots/                        # Bot configurations (Legacy agents)
+│   ├── botVersions/                 # Bot version configurations
 │   ├── genAiFunctions/              # Agentforce GenAI Functions (actions)
 │   ├── genAiPlugins/                # Agentforce GenAI Plugins (topics)
+│   ├── genAiPlannerBundles/         # GenAI Planner Bundles
 │   ├── flows/                       # Flows (including flow actions)
 │   ├── externalServiceRegistrations/ # External service registrations
-│   ├── externalCredentials/        # External credentials
+│   ├── externalCredentials/         # External credentials
 │   ├── namedCredentials/            # Named credentials
+│   ├── permissionsets/              # Permission sets (assigned to current user)
 │   └── ...                          # Other metadata types
 ├── .github/workflows/                # GitHub Actions workflow
 ├── config/                           # Salesforce project configuration
@@ -296,8 +363,21 @@ Or use the `-p` flag to specify packages directly:
 - Check for missing dependencies or required packages
 - Review deployment logs for specific component errors
 
+### Agent Script files not activating after deployment
+- **Agent Script files require publishing** after deployment to activate agents
+- Run: `sf agent publish --target-org <org-alias>` after deploying
+- Verify the authoring bundle was deployed successfully
+- Check that the `.agent` file syntax is valid
+- Ensure you have permissions to publish agents in the target org
+
 ## Salesforce DX Resources
 
+### General Resources
 - [Salesforce DX Developer Guide](https://developer.salesforce.com/docs/atlas.en-us.sfdx_dev.meta/sfdx_dev/sfdx_dev_intro.htm)
 - [Salesforce CLI Setup Guide](https://developer.salesforce.com/docs/atlas.en-us.sfdx_setup.meta/sfdx_setup/sfdx_setup_intro.htm)
 - [Salesforce CLI Command Reference](https://developer.salesforce.com/docs/atlas.en-us.sfdx_cli_reference.meta/sfdx_cli_reference/cli_reference.htm)
+
+### Agentforce DX Resources
+- [Author an Agent with Agentforce DX](https://developer.salesforce.com/docs/ai/agentforce/guide/agent-dx-nga-author-agent.html) - Complete guide for working with Agent Script files
+- [Agentforce Basics (Trailhead)](https://trailhead.salesforce.com/) - Learn about Agentforce
+- [Build Enterprise-Ready Agents (Salesforce Help)](https://help.salesforce.com/) - Agentforce Builder documentation
