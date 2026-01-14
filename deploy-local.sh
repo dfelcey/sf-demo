@@ -9,6 +9,8 @@ INSTANCE_URL="https://login.salesforce.com"
 ORG_ALIAS="deploy-target"
 PACKAGES=""  # Comma-separated package IDs or version IDs
 PACKAGES_FILE=".packages"  # File containing package IDs (one per line)
+PACKAGE_VERSION_FILE=".package-version"  # File containing package version ID for this project
+USE_PACKAGE=true  # Prefer package installation over direct deployment
 
 # Parse command line arguments
 show_usage() {
@@ -25,14 +27,18 @@ Options:
   -v, --verbose              Enable verbose output
   -p, --packages PACKAGES    Comma-separated package IDs to install (04t... or 0Ho...)
   --packages-file FILE       File containing package IDs (one per line, default: .packages)
+  --package-version ID       Package version ID to install (04t...) - overrides .package-version file
+  --no-package               Skip package installation, deploy metadata directly
   -h, --help                 Show this help message
 
 Examples:
-  $0                                    # Use defaults
+  $0                                    # Use defaults (prefers package if .package-version exists)
   $0 -v                                 # Verbose mode with defaults
-  $0 -p 04t000000000000                # Install package before deploying
-  $0 -p 04t000000000000,04t000000000001 # Install multiple packages
-  $0 --packages-file .packages          # Install packages from file
+  $0 --package-version 04tXXXXXXXXXXXXX # Install specific package version
+  $0 --no-package                       # Deploy metadata directly (skip package)
+  $0 -p 04t000000000000                # Install dependency packages before deploying
+  $0 -p 04t000000000000,04t000000000001 # Install multiple dependency packages
+  $0 --packages-file .packages          # Install dependency packages from file
   $0 https://test.salesforce.com        # Specify instance URL
   $0 -v production-org                  # Verbose mode with org alias
   $0 https://login.salesforce.com prod  # Specify both
@@ -55,6 +61,14 @@ while [[ $# -gt 0 ]]; do
         --packages-file)
             PACKAGES_FILE="$2"
             shift 2
+            ;;
+        --package-version)
+            PACKAGE_VERSION="$2"
+            shift 2
+            ;;
+        --no-package)
+            USE_PACKAGE=false
+            shift
             ;;
         -h|--help)
             show_usage
@@ -265,28 +279,106 @@ echo "📦 Deploying to Salesforce"
 echo "=========================================="
 echo ""
 
-# Check what we're deploying
-if [ ! -d "force-app" ]; then
-    echo "❌ force-app directory not found!"
-    echo "Current directory: $(pwd)"
-    exit 1
+# Check for package version file if not explicitly provided
+if [ -z "$PACKAGE_VERSION" ] && [ "$USE_PACKAGE" = true ] && [ -f "$PACKAGE_VERSION_FILE" ]; then
+    PACKAGE_VERSION=$(grep -v '^#' "$PACKAGE_VERSION_FILE" | grep -v '^$' | head -1 | xargs)
+    if [ -n "$PACKAGE_VERSION" ]; then
+        echo "Found package version in $PACKAGE_VERSION_FILE: $PACKAGE_VERSION"
+        echo ""
+    fi
 fi
 
-echo "Deploying from force-app directory..."
-echo ""
-
-# Deploy
-sf project deploy start --source-dir force-app --target-org "$ORG_ALIAS" --wait 10 || {
+# Deploy via package installation (preferred method)
+if [ -n "$PACKAGE_VERSION" ] && [ "$USE_PACKAGE" = true ]; then
+    echo "🚀 Installing package version: $PACKAGE_VERSION"
     echo ""
-    echo "❌ Deployment failed"
+    echo "Package installation is faster and more reliable than direct metadata deployment."
     echo ""
-    echo "Check the error messages above for details."
-    exit 1
-}
+    
+    # Check if package is already installed
+    INSTALLED_CHECK=$(sf package installed list --target-org "$ORG_ALIAS" --json 2>/dev/null)
+    if [ $? -eq 0 ] && command -v jq &> /dev/null; then
+        IS_INSTALLED=$(echo "$INSTALLED_CHECK" | jq -r ".result[] | select(.SubscriberPackageVersionId == \"$PACKAGE_VERSION\") | .SubscriberPackageVersionId" 2>/dev/null)
+        if [ -n "$IS_INSTALLED" ]; then
+            echo "✅ Package version already installed"
+            echo ""
+            echo "To upgrade to a new version, update $PACKAGE_VERSION_FILE with the new version ID"
+            echo "or use: $0 --package-version <new-version-id>"
+            echo ""
+            echo "Org: $ORG_USERNAME"
+            echo "View in Salesforce: $(echo "$ORG_INFO" | jq -r '.result.instanceUrl // ""' 2>/dev/null || echo "")"
+            exit 0
+        fi
+    fi
+    
+    # Install the package
+    if [ "$VERBOSE" = true ]; then
+        sf package install --package "$PACKAGE_VERSION" --target-org "$ORG_ALIAS" --wait 10 --no-prompt || {
+            echo ""
+            echo "❌ Package installation failed"
+            echo ""
+            echo "Falling back to direct metadata deployment..."
+            echo ""
+            USE_PACKAGE=false
+        }
+    else
+        sf package install --package "$PACKAGE_VERSION" --target-org "$ORG_ALIAS" --wait 10 --no-prompt 2>&1 | grep -v "^$" || {
+            echo ""
+            echo "❌ Package installation failed"
+            echo ""
+            echo "Falling back to direct metadata deployment..."
+            echo ""
+            USE_PACKAGE=false
+        }
+    fi
+    
+    if [ "$USE_PACKAGE" = true ]; then
+        echo ""
+        echo "✅ Package installed successfully!"
+        echo ""
+        echo "Org: $ORG_USERNAME"
+        echo "View in Salesforce: $(echo "$ORG_INFO" | jq -r '.result.instanceUrl // ""' 2>/dev/null || echo "")"
+        exit 0
+    fi
+fi
 
-echo ""
-echo "✅ Deployment completed successfully!"
-echo ""
-echo "Org: $ORG_USERNAME"
-echo "View in Salesforce: $(echo "$ORG_INFO" | jq -r '.result.instanceUrl // ""' 2>/dev/null || echo "")"
+# Fallback to direct metadata deployment
+if [ "$USE_PACKAGE" = false ] || [ -z "$PACKAGE_VERSION" ]; then
+    if [ "$USE_PACKAGE" = false ]; then
+        echo "Deploying metadata directly (--no-package flag specified)"
+    else
+        echo "No package version configured, deploying metadata directly"
+        echo ""
+        echo "💡 Tip: For faster deployments, create a package and use package installation:"
+        echo "  1. Create package: ./create-package.sh -a devhub-org"
+        echo "  2. Save version ID to .package-version file"
+        echo "  3. Run: ./deploy-local.sh (will use package automatically)"
+    fi
+    echo ""
+    
+    # Check what we're deploying
+    if [ ! -d "force-app" ]; then
+        echo "❌ force-app directory not found!"
+        echo "Current directory: $(pwd)"
+        exit 1
+    fi
+    
+    echo "Deploying from force-app directory..."
+    echo ""
+    
+    # Deploy
+    sf project deploy start --source-dir force-app --target-org "$ORG_ALIAS" --wait 10 || {
+        echo ""
+        echo "❌ Deployment failed"
+        echo ""
+        echo "Check the error messages above for details."
+        exit 1
+    }
+    
+    echo ""
+    echo "✅ Deployment completed successfully!"
+    echo ""
+    echo "Org: $ORG_USERNAME"
+    echo "View in Salesforce: $(echo "$ORG_INFO" | jq -r '.result.instanceUrl // ""' 2>/dev/null || echo "")"
+fi
 

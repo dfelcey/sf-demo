@@ -42,6 +42,10 @@ $RECYCLE.BIN/
 # Local environment variables
 .env
 
+# Package version (optional - can be committed for team use)
+# Uncomment to ignore .package-version file:
+# .package-version
+
 # Python Salesforce Functions
 **/__pycache__/
 **/.venv/

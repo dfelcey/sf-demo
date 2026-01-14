@@ -17,16 +17,37 @@ This is the simplest approach - no GitHub Actions needed!
 **Features:**
 - Automatic Salesforce CLI detection
 - Browser-based authentication
-- Optional package installation before deployment
+- **Package deployment (preferred)** - automatically uses package installation if `.package-version` exists
+- Direct metadata deployment (fallback) - deploys from `force-app` if no package configured
+- Optional dependency package installation before deployment
 - Support for package files (`.packages`)
 
-**Install packages before deploying:**
+**Deploy via package (recommended for production):**
 
 ```bash
-# Install packages from command line
+# 1. Create a package first (one-time setup)
+./create-package.sh -a devhub-org
+
+# 2. Save the package version ID to .package-version file
+echo "04tXXXXXXXXXXXXXXX" > .package-version
+
+# 3. Deploy using package installation (faster and more reliable)
+./deploy-local.sh
+```
+
+**Deploy metadata directly:**
+
+```bash
+# Deploy from force-app directory
+./deploy-local.sh
+
+# Skip package and deploy metadata directly
+./deploy-local.sh --no-package
+
+# Install dependency packages before deploying
 ./deploy-local.sh -p 04t000000000000,04t000000000001
 
-# Install packages from file
+# Install dependency packages from file
 ./deploy-local.sh --packages-file .packages
 
 # Verbose mode for debugging
@@ -196,9 +217,35 @@ For sandboxes, use:
 ./trigger-deploy.sh https://test.salesforce.com
 ```
 
-### Package Installation
+### Package Deployment (Recommended)
 
-Create a `.packages` file (one package ID per line) to automatically install packages before deployment:
+**For optimal deployments, use package installation:**
+
+1. **Create a package** (one-time setup):
+   ```bash
+   ./create-package.sh -a devhub-org
+   ```
+
+2. **Save the package version ID** to `.package-version`:
+   ```bash
+   echo "04tXXXXXXXXXXXXXXX" > .package-version
+   ```
+
+3. **Deploy** - the script will automatically use package installation:
+   ```bash
+   ./deploy-local.sh
+   ```
+
+**Benefits of package deployment:**
+- ✅ Faster deployment (package installation is optimized)
+- ✅ More reliable (packages are pre-validated)
+- ✅ Better for production environments
+- ✅ Automatic dependency management
+- ✅ Version tracking
+
+### Dependency Package Installation
+
+Create a `.packages` file (one package ID per line) to automatically install dependency packages before deployment:
 
 ```
 # Example .packages file
