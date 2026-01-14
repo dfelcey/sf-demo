@@ -10,6 +10,8 @@
 # - GenAI Functions (actions that can be added to agents)
 # - GenAI Plugins (topics/categories of actions)
 # - GenAI Planner Bundles (agent planner configurations)
+# - Permission Sets (user access to agents/bots)
+# - Profiles (user access to agents/bots)
 # - Flows (including flow actions)
 # - External Services and Credentials
 
@@ -73,6 +75,16 @@ Bot
 
 # BotVersion (versions of agent configurations)
 BotVersion
+*
+
+# Permission Sets (may grant access to agents/bots)
+# Note: This will pull ALL permission sets - filter as needed
+PermissionSet
+*
+
+# Profiles (may grant access to agents/bots via profile settings)
+# Note: This will pull ALL profiles - filter as needed
+Profile
 *
 
 # Flows (only flows used by Agentforce agents)

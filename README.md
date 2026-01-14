@@ -99,6 +99,8 @@ This script retrieves:
 - **GenAI Functions** (actions that can be added to agents)
 - **GenAI Plugins** (topics/categories of actions)
 - **GenAI Planner Bundles** (agent planner configurations)
+- **Permission Sets** (user access permissions for agents/bots)
+- **Profiles** (user access permissions for agents/bots)
 - **Flows** (including flow actions)
 - **External Service Registrations**
 - **Named Credentials** and **External Credentials**
