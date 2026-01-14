@@ -55,6 +55,35 @@ This is the simplest approach - no GitHub Actions needed!
    - It will automatically open in your browser
    - Monitor the deployment progress in real-time
 
+### Retrieve Agentforce Assets
+
+**Pull Agentforce assets from a Salesforce org:**
+
+```bash
+# Pull all Agentforce assets (agents, external services, named credentials)
+./pull-agentforce.sh -a my-org
+
+# Pull to custom directory
+./pull-agentforce.sh -a my-org -o agentforce-assets
+
+# Verbose mode for debugging
+./pull-agentforce.sh -a my-org --verbose
+
+# See all options
+./pull-agentforce.sh --help
+```
+
+This script retrieves:
+- **GenAI Functions** (actions that can be added to agents)
+- **GenAI Plugins** (topics/categories of actions)
+- **GenAI Planner Bundles** (agent planner configurations)
+- **Flows** (including flow actions)
+- **External Service Registrations**
+- **Named Credentials** and **External Credentials**
+- **Connected Apps**
+- **Custom Metadata Types**
+- **Apex Classes** (including invocable actions)
+
 ## How It Works
 
 ### Local Deployment (`deploy-local.sh`)
@@ -98,6 +127,8 @@ sf-demo/
 ├── config/                           # Salesforce project configuration
 ├── deploy-local.sh                   # Local deployment script (recommended)
 ├── trigger-deploy.sh                 # GitHub Actions trigger script
+├── pull-agentforce.sh                # Retrieve Agentforce assets from org
+├── pull-assets.sh                    # General metadata retrieval script
 ├── agentforce-metadata.txt           # Agentforce metadata reference
 └── .packages                         # Package IDs for installation (optional)
 ```
@@ -106,7 +137,9 @@ sf-demo/
 
 - **`deploy-local.sh`** - Simple local deployment with package installation support
 - **`trigger-deploy.sh`** - Triggers GitHub Actions deployment workflow
-- **`agentforce-metadata.txt`** - Reference file for Agentforce metadata types
+- **`pull-agentforce.sh`** - Convenience script to retrieve Agentforce assets from an org
+- **`pull-assets.sh`** - General-purpose script to retrieve metadata from Salesforce orgs
+- **`agentforce-metadata.txt`** - Metadata configuration file for Agentforce assets
 - **`.packages`** - Optional file listing package IDs to install before deployment
 
 ## Configuration
