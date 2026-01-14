@@ -361,7 +361,7 @@ EOF
     done
     
     cat >> "$TEMP_MANIFEST" << EOF
-    <version>64.0</version>
+    <version>65.0</version>
 </Package>
 EOF
     
@@ -498,7 +498,7 @@ EOF
     fi
     
     cat >> "$TEMP_MANIFEST" << EOF
-    <version>64.0</version>
+    <version>65.0</version>
 </Package>
 EOF
     
