@@ -38,6 +38,7 @@ Pull Agentforce agent assets, external services, and named credentials from a Sa
 This script retrieves:
   - Agentforce Agents (complete agent configurations)
   - Bot and BotVersion (agent components)
+  - AiAuthoringBundle (Agent Script files - Next Generation Agentforce agents)
   - GenAI Functions (actions that can be added to agents)
   - GenAI Plugins (topics/categories of actions)
   - GenAI Planner Bundles (agent planner configurations)
@@ -138,13 +139,16 @@ echo "🤖 Agentforce Asset Retrieval"
 echo "=========================================="
 echo ""
 echo "This will retrieve:"
-echo "  • Einstein Agent Configurations"
+echo "  • Agent Script files (AiAuthoringBundle - Next Generation agents)"
+echo "  • Bot and BotVersion (agent configurations)"
+echo "  • GenAI Functions, Plugins, and Planner Bundles"
 echo "  • External Service Registrations"
 echo "  • Named Credentials"
 echo "  • External Credentials"
 echo "  • Connected Apps"
 echo "  • Custom Metadata Types"
-echo "  • Agent-related Custom Objects"
+echo "  • Apex Classes (invocable actions)"
+echo "  • Flows (including flow actions)"
 echo ""
 
 if [ -z "$ORG_ALIAS" ]; then
@@ -284,6 +288,7 @@ if [ $EXIT_CODE -eq 0 ]; then
     echo "Retrieved assets are in: $OUTPUT_DIR"
     echo ""
     echo "Key locations:"
+    echo "  • Agent Script files: $OUTPUT_DIR/main/default/aiAuthoringBundles/"
     echo "  • Agents (Bots): $OUTPUT_DIR/main/default/bots/"
     echo "  • Bot Versions: $OUTPUT_DIR/main/default/botVersions/"
     echo "  • GenAI Planner Bundles: $OUTPUT_DIR/main/default/genAiPlannerBundles/"

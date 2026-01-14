@@ -95,6 +95,7 @@ echo "04tXXXXXXXXXXXXXXX" > .package-version
 ```
 
 This script retrieves:
+- **AiAuthoringBundle** (Agent Script files - Next Generation Agentforce agents with .agent files)
 - **Bot and BotVersion** (Agentforce agent configurations - Note: 'Agent' metadata type requires newer CLI)
 - **GenAI Functions** (actions that can be added to agents)
 - **GenAI Plugins** (topics/categories of actions)

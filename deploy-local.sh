@@ -434,6 +434,15 @@ if [ "$USE_PACKAGE" = false ] || [ -z "$PACKAGE_VERSION" ]; then
     echo "Deploying from force-app directory..."
     echo ""
     
+    # Check for Agent Script files (AiAuthoringBundle) and provide info
+    if [ -d "force-app/main/default/aiAuthoringBundles" ]; then
+        echo "📝 Found Agent Script files (AiAuthoringBundle) to deploy"
+        echo ""
+        echo "Note: After deployment, you may need to publish authoring bundles:"
+        echo "  sf agent publish --target-org $ORG_ALIAS"
+        echo ""
+    fi
+    
     # Deploy
     sf project deploy start --source-dir force-app --target-org "$ORG_ALIAS" --wait 10 || {
         echo ""
@@ -446,6 +455,14 @@ if [ "$USE_PACKAGE" = false ] || [ -z "$PACKAGE_VERSION" ]; then
     echo ""
     echo "✅ Deployment completed successfully!"
     echo ""
+    
+    # If Agent Script files were deployed, remind about publishing
+    if [ -d "force-app/main/default/aiAuthoringBundles" ]; then
+        echo "📝 Agent Script files deployed. To activate agents, publish authoring bundles:"
+        echo "  sf agent publish --target-org $ORG_ALIAS"
+        echo ""
+    fi
+    
     echo "Org: $ORG_USERNAME"
     echo "View in Salesforce: $(echo "$ORG_INFO" | jq -r '.result.instanceUrl // ""' 2>/dev/null || echo "")"
 fi

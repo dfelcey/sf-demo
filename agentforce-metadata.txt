@@ -7,6 +7,7 @@
 #
 # This project includes the following Agentforce assets:
 # - Bot and BotVersion (agent configurations - Agent metadata type not yet supported in CLI)
+# - AiAuthoringBundle (Agent Script files - Next Generation Agentforce agents)
 # - GenAI Functions (actions that can be added to agents)
 # - GenAI Plugins (topics/categories of actions)
 # - GenAI Planner Bundles (agent planner configurations)
@@ -74,6 +75,11 @@ Bot
 
 # BotVersion (versions of agent configurations)
 BotVersion
+*
+
+# AiAuthoringBundle (Agent Script files - Next Generation Agentforce agents)
+# Contains .agent files that define agent behavior using Agent Script language
+AiAuthoringBundle
 *
 
 # Permission Sets (agent-related permission sets assigned to current user)
