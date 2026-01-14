@@ -83,11 +83,6 @@ BotVersion
 PermissionSet
 # Will be populated dynamically by pull-agentforce.sh
 
-# Profiles (may grant access to agents/bots via profile settings)
-# Note: This will pull ALL profiles - filter as needed
-Profile
-*
-
 # Flows (only flows used by Agentforce agents)
 Flow
 Add_Delivery_Instructions
