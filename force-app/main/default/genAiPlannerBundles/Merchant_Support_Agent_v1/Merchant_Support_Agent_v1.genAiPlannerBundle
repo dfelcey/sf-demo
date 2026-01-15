@@ -735,5 +735,11 @@
         <surface>SurfaceAction__Messaging</surface>
         <surfaceType>Messaging</surfaceType>
     </plannerSurfaces>
+    <plannerSurfaces>
+        <adaptiveResponseAllowed>true</adaptiveResponseAllowed>
+        <callRecordingAllowed>false</callRecordingAllowed>
+        <surface>SurfaceAction__CustomerWebClient</surface>
+        <surfaceType>CustomerWebClient</surfaceType>
+    </plannerSurfaces>
     <plannerType>AiCopilot__ReAct</plannerType>
 </GenAiPlannerBundle>

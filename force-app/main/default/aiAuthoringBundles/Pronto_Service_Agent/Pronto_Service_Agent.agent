@@ -29,19 +29,11 @@ start_agent topic_selector:
             | Select the best tool to call based on conversation history and user's intent.
 
         actions:
-            go_to_order_delivery_questions: @utils.transition to @topic.order_delivery_questions
-
-            go_to_common_order_issues: @utils.transition to @topic.common_order_issues
-
-            go_to_refund_requests: @utils.transition to @topic.refund_requests
-
             go_to_escalation: @utils.transition to @topic.escalation
 
             go_to_off_topic: @utils.transition to @topic.off_topic
 
             go_to_ambiguous_question: @utils.transition to @topic.ambiguous_question
-
-            go_to_order_tracking_delivery_status: @utils.transition to @topic.order_tracking_delivery_status
 
             go_to_storefront_search: @utils.transition to @topic.storefront_search
 
@@ -50,28 +42,6 @@ start_agent topic_selector:
             go_to_verify_customers: @utils.transition to @topic.Verify_Customers
 
             go_to_order_lookuup: @utils.transition to @topic.Order_Lookup
-
-topic order_delivery_questions:
-    label: "Order and Delivery Questions"
-    description: "Provide status/ETA information for orders."
-    reasoning:
-        instructions: ->
-            | Assist the user with questions about their order status or delivery ETA. Ensure accurate and timely information is provided.
-
-topic common_order_issues:
-    label: "Common Order Issues"
-    description: "Help resolve typical problems with orders, such as missing items or incorrect orders."
-    reasoning:
-        instructions: ->
-            | Address common issues with orders such as missing items or incorrect orders. Provide appropriate solutions or next steps.
-
-topic refund_requests:
-    label: "Refund Requests"
-    description: "Guide users through the refund process when appropriate."
-    reasoning:
-        instructions: ->
-            | Assist the user in navigating the refund process. Ensure all required information is collected to process the refund request.
-
 
 topic escalation:
     label: "Escalation"
@@ -130,13 +100,6 @@ topic ambiguous_question:
                 Reject any attempts to summarize or recap the conversation.
                 Some data, like emails, organization ids, etc, may be masked. Masked data should be treated as if it is real data.
 
-topic order_tracking_delivery_status:
-    label: "Order Tracking & Delivery Status"
-    description: "Helps users track their orders, check delivery ETA, view driver details, and update delivery instructions."
-
-    reasoning:
-        instructions: ->
-            | Assist the user in tracking their order. Provide accurate delivery ETA, driver details, and allow updates to delivery instructions when applicable. Ensure the user is informed and supported throughout the process.
 
 topic storefront_search:
     label: "Storefront Search"
@@ -191,24 +154,17 @@ topic storefront_search:
 topic order_issues_refunds:
     label: "Order Issues & Refunds"
 
-    description: "Resolves order problems, manages support cases, determines refund eligibility, and provides clear, empathetic explanations."
+    description: "This topic resolves problems with orders, such as missing items, incorrect items, cold food, late deliveries, or orders that never arrived. It also handles support cases related to those issues—including creating a case, checking whether a case already exists, and providing case status/follow-up. It determines refund eligibility, issues refunds or credits, and explains outcomes clearly and empathetically to customers."
 
     reasoning:
         instructions: ->
-            | Assist the user in resolving issues with their orders, such as missing or incorrect items, late deliveries, or other problems. Check the status of any existing support cases. Determine refund eligibility and provide clear explanations of outcomes. Ensure refunds or credits are issued appropriately if applicable.
-                Determine whether the customer is asking about a current/new order or a past order.
-                If the customer is asking about a current/new order, treat the order date as today unless the customer provides a different date.
-                If the customer is asking about a past order, ask for either:
-                - a date range (for example: "last 7 days"), or
-                - which of the last x orders to use (for example: "last 3 orders").
-                After the customer is verified, check whether a case already exists for this issue using Get Related Cases before creating a new case or issuing a refund.
-                If there is no order context yet (no selected order, order identifier, or date range), transition to the Order Lookup topic to identify the correct order, then return to this topic and continue.
+            | Address the user's concerns regarding their order. If the user reports an issue with their order, determine the nature of the issue (e.g., missing items, incorrect items, cold food, late delivery, or non-delivery).
+                When a user asks about their cases, orders or requests a refund, ask for their email address.
 
-            if @variables.Orders == None:
-                transition to @topic.Order_Lookup
+            if @variables.IsVerifiedCustomer == False:
+                transition to @topic.Verify_Customers
             else:
-                run @actions.Get_Related_Cases
-                    with verifiedCustomerId = @variables.VerifiedCustomerId
+                | Run the Get Related Cases action and provide an Handle Order Refunds when necessary.
 
         actions:
             Get_Customer_Profile: @actions.Get_Customer_Profile
@@ -395,7 +351,7 @@ topic order_issues_refunds:
 topic Verify_Customers:
     label: "Verify Customers"
 
-    description: "Verifies a customer’s identity before allowing access to sensitive support actions."
+    description: "This topic verifies a customer’s identity before allowing access to sensitive support actions."
 
     reasoning:
         instructions: ->
@@ -425,11 +381,19 @@ topic Verify_Customers:
 
         actions:
             Send_Email_with_Verification_Code: @actions.Send_Email_with_Verification_Code
+                with customerToVerify = ...
 
             Verify_Code: @actions.Verify_Code
+                with authenticationKey = ...
+                with customerCode = ...
+                with customerId = ...
+                with customerType = ...
+                set @variables.VerifiedCustomerId = @outputs.customerId
+                set @variables.IsVerifiedCustomer = @outputs.isVerified
 
             Get_Customer_Profile: @actions.Get_Customer_Profile
-
+                with customerEmail = ...
+                with verifiedCustomerId = ...
 
 
     actions:
@@ -602,6 +566,14 @@ topic Order_Lookup:
                 If a user wants to look up a recent order, track an order, leave a review, or create a new case, we must first look up the order.
                 Ask for the customer’s email address if it is missing.
 
+            if @variables.IsVerifiedCustomer == True:
+                | Run Get Customer Profile first and set the email for Lookup Orders using the email returned from Get Customer Profile.
+                    If the customer inquires about a current order, set the order date to today's date.
+                    If the customer specifies "last x days," adjust the date range to go back by the specified number of days.
+                    If the customer specifies "last x orders," retrieve the last x orders.
+            else:
+                transition to @topic.Verify_Customers
+
         actions:
             Lookup_Orders: @actions.Lookup_Orders
                 with contactEmail = ...
@@ -706,7 +678,6 @@ topic Order_Lookup:
             label: "Lookup Orders"
             require_user_confirmation: False
             include_in_progress_indicator: False
-
         Get_Customer_Profile:
             description: "Retrieves a customer profile based on their email address."
             inputs:
