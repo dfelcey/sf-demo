@@ -9,7 +9,7 @@ A Salesforce project with Agentforce assets and automated deployment capabilitie
 **Deploy directly using your local CLI:**
 
 ```bash
-./deploy-local.sh
+./deploy-local.sh my-org
 ```
 
 This is the simplest approach - no GitHub Actions needed!
@@ -17,41 +17,23 @@ This is the simplest approach - no GitHub Actions needed!
 **Features:**
 - Automatic Salesforce CLI detection
 - Browser-based authentication
-- **Package deployment (preferred)** - automatically uses package installation if `.package-version` exists
-- Direct metadata deployment (fallback) - deploys from `force-app` if no package configured
-- Optional dependency package installation before deployment
-- Support for package files (`.packages`)
-
-**Deploy via package (recommended for production):**
-
-```bash
-# 1. Create a package first (one-time setup)
-./create-package.sh -a devhub-org
-
-# 2. Save the package version ID to .package-version file
-echo "04tXXXXXXXXXXXXXXX" > .package-version
-
-# 3. Deploy using package installation (faster and more reliable)
-./deploy-local.sh
-```
+- Direct metadata deployment from `force-app`
+- Clear prompts for org authentication
 
 **Deploy metadata directly:**
 
 ```bash
 # Deploy from force-app directory
-./deploy-local.sh
-
-# Skip package and deploy metadata directly
-./deploy-local.sh --no-package
-
-# Install dependency packages before deploying
-./deploy-local.sh -p 04t000000000000,04t000000000001
-
-# Install dependency packages from file
-./deploy-local.sh --packages-file .packages
+./deploy-local.sh my-org
 
 # Verbose mode for debugging
-./deploy-local.sh -v
+./deploy-local.sh -v my-org
+
+# Deploy to a specific org alias
+./deploy-local.sh my-org
+
+# Specify instance URL and org alias
+./deploy-local.sh my-sandbox https://test.salesforce.com
 ```
 
 ### Option 2: Deploy via GitHub Actions
@@ -125,7 +107,7 @@ force-app/main/default/aiAuthoringBundles/<AgentName>/
 
 1. **Deploy the metadata:**
    ```bash
-   ./deploy-local.sh -a target-org
+   ./deploy-local.sh target-org
    ```
 
 2. **Publish authoring bundles** (required to activate agents):
@@ -145,7 +127,7 @@ Based on [Salesforce Agentforce DX documentation](https://developer.salesforce.c
 
 1. **Create or Retrieve** - Pull existing agents from your org or create new ones
 2. **Edit** - Modify Agent Script files (`.agent`) in VS Code with full syntax support
-3. **Deploy** - Deploy metadata using `./deploy-local.sh`
+3. **Deploy** - Deploy metadata using `./deploy-local.sh <org-alias>`
 4. **Publish** - Publish authoring bundles using `sf agent publish` to activate agents
 5. **Test** - Test agents in your Salesforce org
 
@@ -201,8 +183,7 @@ aiAuthoringBundles/
 
 1. **Check CLI** → Verifies Salesforce CLI is installed
 2. **Authenticate** → Opens browser for Salesforce login (if needed)
-3. **Install Packages** → Optionally installs packages from `.packages` file or command line
-4. **Deploy** → Deploys metadata from `force-app/` directory
+3. **Deploy** → Deploys metadata from `force-app/` directory
 
 ### GitHub Actions Deployment (`trigger-deploy.sh`)
 
@@ -218,7 +199,6 @@ aiAuthoringBundles/
 - ✅ **No Connected App Required** - Uses standard browser login session tokens
 - ✅ **Automatic CLI Installation** - Detects and installs dependencies in GitHub Actions
 - ✅ **Simple Authentication** - Browser login, no manual token management
-- ✅ **Package Installation** - Install packages before deployment (local deployment only)
 - ✅ **Real-time Monitoring** - Script shows deployment progress and opens workflow links
 - ✅ **Agentforce Support** - Includes Agentforce assets (GenAI Functions, Plugins, Flows)
 
@@ -250,18 +230,17 @@ sf-demo/
 ├── pull-assets.sh                    # General metadata retrieval script
 ├── create-package.sh                 # Create Salesforce package with assets
 ├── agentforce-metadata.txt           # Agentforce metadata reference
-└── .packages                         # Package IDs for installation (optional)
+└── README.md
 ```
 
 ### Key Files
 
-- **`deploy-local.sh`** - Simple local deployment with package installation support
+- **`deploy-local.sh`** - Simple local deployment from `force-app`
 - **`trigger-deploy.sh`** - Triggers GitHub Actions deployment workflow
 - **`pull-agentforce.sh`** - Convenience script to retrieve Agentforce assets from an org
 - **`pull-assets.sh`** - General-purpose script to retrieve metadata from Salesforce orgs
 - **`create-package.sh`** - Create Salesforce package (unlocked or managed) with all assets
 - **`agentforce-metadata.txt`** - Metadata configuration file for Agentforce assets
-- **`.packages`** - Optional file listing package IDs to install before deployment
 
 ## Configuration
 
@@ -281,51 +260,10 @@ Default: `https://login.salesforce.com` (Production)
 For sandboxes, use:
 ```bash
 # Local deployment
-./deploy-local.sh https://test.salesforce.com
+./deploy-local.sh my-sandbox https://test.salesforce.com
 
 # GitHub Actions deployment
 ./trigger-deploy.sh https://test.salesforce.com
-```
-
-### Package Deployment (Recommended)
-
-**For optimal deployments, use package installation:**
-
-1. **Create a package** (one-time setup):
-   ```bash
-   ./create-package.sh -a devhub-org
-   ```
-
-2. **Save the package version ID** to `.package-version`:
-   ```bash
-   echo "04tXXXXXXXXXXXXXXX" > .package-version
-   ```
-
-3. **Deploy** - the script will automatically use package installation:
-   ```bash
-   ./deploy-local.sh
-   ```
-
-**Benefits of package deployment:**
-- ✅ Faster deployment (package installation is optimized)
-- ✅ More reliable (packages are pre-validated)
-- ✅ Better for production environments
-- ✅ Automatic dependency management
-- ✅ Version tracking
-
-### Dependency Package Installation
-
-Create a `.packages` file (one package ID per line) to automatically install dependency packages before deployment:
-
-```
-# Example .packages file
-04t000000000000AAA
-04t000000000000BBB
-```
-
-Or use the `-p` flag to specify packages directly:
-```bash
-./deploy-local.sh -p 04t000000000000AAA,04t000000000000BBB
 ```
 
 ## Troubleshooting
@@ -349,12 +287,6 @@ Or use the `-p` flag to specify packages directly:
   - Node.js: https://nodejs.org/
   - Salesforce CLI: `npm install -g @salesforce/cli@latest`
 - **Update CLI**: Scripts check for updates when run with `-v` (verbose) flag
-
-### Package installation fails
-- Verify package IDs are correct (format: `04t...` for managed packages)
-- Check that packages are available in your org
-- Ensure you have permission to install packages
-- Review package installation logs for specific errors
 
 ### Deployment fails
 - Check GitHub Actions logs for errors (if using GitHub Actions)
